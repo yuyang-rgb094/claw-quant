@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Pytest_RootDir/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Data (runtime databases — not source code)
+data/*.db
+data/fisher_snapshots/
+
+# Claude worktrees (contains reference PDFs — too large for git)
+.claude/worktrees/
+
+# Coverage
+.coverage
+htmlcov/
+.tox/
+
+# Secrets — never commit
+*.env
+*.secret
+*credentials*
