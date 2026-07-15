@@ -1,0 +1,84 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '7 2 * * 1'  # Every Monday at 02:07 UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v --tb=short --cov=claw_quant --cov-report=term
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: .coverage
+
+  validate:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run validation loop
+        run: |
+          python -c "
+          from claw_quant.validation_loop import ValidationLoop
+          loop = ValidationLoop()
+          report = loop.run_all_checks()
+          md = loop.generate_markdown_report(report)
+          print(md)
+          if not report.is_healthy:
+              print('WARNING: Validation found issues')
+          "
+
+      - name: Run backtest
+        run: |
+          python -c "
+          from claw_quant.backtest.data_loader import HistoricalDataLoader
+          from claw_quant.backtest.engine import BacktestConfig, BacktestEngine
+          from claw_quant.backtest.report import generate_report
+
+          loader = HistoricalDataLoader()
+          start, end = loader.get_date_range()
+          config = BacktestConfig(start_date=start, end_date=end)
+          engine = BacktestEngine(loader, config)
+          result = engine.run()
+          report = generate_report(result, output_path='backtest_report.md')
+          print(report)
+          "
