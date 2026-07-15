@@ -1,0 +1,902 @@
+# Intelligence Source Registry
+# Companion to ADR-013: Political/Policy Intelligence Retrieval System
+# This file is the executable specification of source mapping for the seven
+# regime surveillance points defined in ADR-012 Tier 3.
+#
+# Last updated: 2026-07-07
+# Status: Design specification (pre-implementation)
+
+version: "1.0"
+last_updated: 2026-07-07
+
+# ─────────────────────────────────────────────────────────────────────────
+# Source Authority Hierarchy
+# Determines whether a source can directly trigger Tier 3 processing
+# ─────────────────────────────────────────────────────────────────────────
+
+source_authority_hierarchy:
+  tier_s:
+    name: Sovereign
+    description: "Primary authority — central banks, legislatures, top executive bodies"
+    sources:
+      - fed
+      - pboc
+      - npc
+      - state_council
+      - fsdc
+    can_trigger_tier3: true
+
+  tier_a:
+    name: Regulatory
+    description: "Regulatory bodies with formal rule-making authority"
+    sources:
+      - csrc
+      - safe
+      - mof
+      - cbirc
+      - ndrc
+      - us_treasury
+      - ustr
+      - scio
+    can_trigger_tier3: true  # legislative level only
+
+  tier_b:
+    name: Official Data
+    description: "Statistical agencies publishing economic data"
+    sources:
+      - nbs
+      - bls
+      - bea
+      - hkex
+      - swift
+    can_trigger_tier3: false  # feeds Tier 1
+
+  tier_c:
+    name: Reputable Media
+    description: "Signal detection only — must be corroborated by Tier S/A"
+    sources:
+      - reuters
+      - bloomberg
+      - ft
+      - wsj
+      - xinhua
+      - peoples_daily
+      - caixin
+    can_trigger_tier3: false  # triggers AI classification first
+
+  tier_d:
+    name: Informal Signal
+    description: "Early warning — never actionable alone"
+    sources:
+      - cass
+      - peterson_institute
+      - state_media_editorials
+      - analyst_reports
+    can_trigger_tier3: false
+
+# ─────────────────────────────────────────────────────────────────────────
+# Monitoring Point 3.1: Capital Account Openness
+# Changes in cross-border investment channels (Rey's dilemma parameter)
+# ─────────────────────────────────────────────────────────────────────────
+
+mp_3_1_capital_account:
+  scheduled_sources:
+    - source: safe
+      authority_tier: tier_a
+      frequency: quarterly
+      publication: "Balance of Payments, Capital Account Report"
+      url: "http://www.safe.gov.cn/"
+      keywords:
+        - "资本账户"
+        - "QFII"
+        - "RQFII"
+        - "Stock Connect"
+        - "Bond Connect"
+        - "Wealth Management Connect"
+      classification: regulatory
+      routing: tier2
+
+    - source: hkex
+      authority_tier: tier_a
+      frequency: event_driven
+      publication: "Stock Connect quota adjustments"
+      url: "https://www.hkex.com.hk/"
+      keywords:
+        - "互联互通额度"
+        - "Stock Connect quota"
+        - "Southbound Connect"
+      classification: regulatory
+      routing: tier2
+
+    - source: pboc
+      authority_tier: tier_s
+      frequency: semi_annual
+      publication: "Cross-border RMB settlement report"
+      keywords:
+        - "跨境人民币结算"
+        - "capital account"
+      classification: regulatory
+      routing: tier2
+
+  event_driven_sources:
+    - source: reuters
+      authority_tier: tier_c
+      keywords:
+        - "capital account reform"
+        - "QFII quota increase"
+        - "Stock Connect expansion"
+      classification: verbal
+      routing: log_only
+
+    - source: xinhua
+      authority_tier: tier_c
+      keywords:
+        - "资本账户开放"
+        - "互联互通扩容"
+      classification: verbal
+      routing: log_only
+
+    - source: caixin
+      authority_tier: tier_c
+      keywords:
+        - "资本项目可兑换"
+        - "QFII改革"
+      classification: verbal
+      routing: log_only
+
+  special_handling:
+    - pattern: legislative_change
+      trigger: "Capital account policy revision at NPC level (e.g., Foreign Investment Law amendment)"
+      classification: legislative
+      routing: tier3
+      feynman_protocol: true
+      framework_impact: "Changes Rey's capital account openness parameter"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Monitoring Point 3.2: PBoC Transmission Pathway
+# New monetary tools, transmission reform, equity channel changes
+# ─────────────────────────────────────────────────────────────────────────
+
+mp_3_2_pboc_transmission:
+  scheduled_sources:
+    - source: pboc
+      authority_tier: tier_s
+      frequency: monthly
+      publication: "MLF rate, LPR announcement"
+      url: "http://www.pbc.gov.cn/"
+      keywords:
+        - "MLF"
+        - "LPR"
+        - "逆回购"
+        - "repurchase"
+      classification: regulatory
+      routing: tier1
+
+    - source: pboc
+      authority_tier: tier_s
+      frequency: quarterly
+      publication: "China Monetary Policy Execution Report"
+      keywords:
+        - "货币政策执行报告"
+        - "transmission mechanism"
+        - "传导机制"
+      classification: regulatory
+      routing: tier2
+
+    - source: csrc
+      authority_tier: tier_a
+      frequency: event_driven
+      publication: "Bank/securities firm equity investment limit changes"
+      keywords:
+        - "银行股权投资"
+        - "证券公司自有资金"
+        - "equity investment limit"
+      classification: regulatory
+      routing: tier2
+
+  event_driven_sources:
+    - source: reuters
+      authority_tier: tier_c
+      keywords:
+        - "PBoC new tool"
+        - "structural monetary policy"
+        - "SFISF"
+        - "PMLF"
+      classification: verbal
+      routing: log_only
+
+    - source: caixin
+      authority_tier: tier_c
+      keywords:
+        - "央行新工具"
+        - "货币政策传导"
+        - "SFISF扩容"
+      classification: verbal
+      routing: log_only
+
+  special_handling:
+    - pattern: new_monetary_tool
+      trigger: "PBoC announces new structural monetary policy tool affecting equity channels"
+      classification: regulatory
+      routing: tier3
+      feynman_protocol: true
+      key_metric: "equity_transmission_efficiency direction change (low → medium → high)"
+      framework_impact: "Recalibrates entire weight structure if transmission efficiency changes"
+
+    - pattern: transmission_reform
+      trigger: "Interest rate transmission mechanism reform announced"
+      classification: regulatory
+      routing: tier3
+      feynman_protocol: true
+
+# ─────────────────────────────────────────────────────────────────────────
+# Monitoring Point 3.3: Contribution Weight Drift
+# Quantitative regression validation — NOT intelligence retrieval
+# ─────────────────────────────────────────────────────────────────────────
+
+mp_3_3_contribution_drift:
+  method: "Rolling 2-year window regression"
+  data_source: "Wind API"
+  frequency: quarterly
+  statistical_tests:
+    - "Chow structural break test"
+    - "CUSUM test"
+  trigger: "Any channel's contribution changes >5 percentage points"
+  channels_monitored:
+    - cross_border_portfolio:  # baseline 35-40%
+    - fx_reserves:            # baseline 8-10%
+    - risk_discount:          # baseline 12-15%
+  classification: quantitative
+  routing: tier3
+  feynman_protocol: true
+  note: "This monitoring point is purely quantitative. No intelligence retrieval needed — automated regression runs on Wind data."
+
+# ─────────────────────────────────────────────────────────────────────────
+# Monitoring Point 3.4: Regulatory Framework Definition
+# CSRC functional positioning — legislative vs regulatory vs verbal
+# ─────────────────────────────────────────────────────────────────────────
+
+mp_3_4_regulatory_framework:
+  scheduled_sources:
+    - source: npc
+      authority_tier: tier_s
+      frequency: event_driven
+      publication: "Legislative calendar, draft laws, full session decisions"
+      url: "http://www.npc.gov.cn/"
+      keywords:
+        - "证券法"
+        - "商业银行法"
+        - "基金法"
+        - "Securities Law"
+      classification: legislative
+      routing: tier3
+      feynman_protocol: true
+      framework_impact: "Hard constraint change — immediately triggers regime re-evaluation"
+
+    - source: csrc
+      authority_tier: tier_a
+      frequency: event_driven
+      publication: "Regulatory announcements, draft rules for comment"
+      url: "http://www.csrc.gov.cn/"
+      keywords:
+        - "IPO节奏"
+        - "退市制度"
+        - "交易制度"
+        - "T+0"
+        - "限售解禁"
+        - "再融资"
+      classification: regulatory
+      routing: tier2
+
+    - source: state_council
+      authority_tier: tier_s
+      frequency: weekly
+      publication: "Executive meeting summary (国务院常务会议)"
+      url: "http://www.gov.cn/"
+      keywords:
+        - "国务院常务会议"
+        - "资本市场"
+        - "金融稳定"
+      classification: regulatory
+      routing: tier2
+
+    - source: fsdc
+      authority_tier: tier_s
+      frequency: event_driven
+      publication: "Financial Stability and Development Committee statements"
+      keywords:
+        - "金融委"
+        - "financial stability"
+        - "cross-regulatory coordination"
+      classification: regulatory
+      routing: tier2
+      note: "FSDC statements signal cross-regulatory coordination — high importance for framework assessment"
+
+  event_driven_sources:
+    - source: caixin
+      authority_tier: tier_c
+      keywords:
+        - "证券法修订"
+        - "IPO改革"
+        - "退市"
+        - "注册制"
+      classification: verbal
+      routing: log_only
+
+    - source: reuters
+      authority_tier: tier_c
+      keywords:
+        - "China securities law"
+        - "IPO reform"
+        - "delisting reform"
+        - "CSRC new chairman"
+      classification: verbal
+      routing: log_only
+
+  special_handling:
+    - pattern: three_level_classification
+      levels:
+        legislative:
+          examples: ["Securities Law revision", "Commercial Bank Law revision"]
+          routing: tier3
+          feynman_protocol: true
+        regulatory:
+          examples: ["IPO rhythm change", "delisting enforcement", "trading system reform"]
+          routing: tier2
+          note: "Recorded as structural change, incorporated in next quarterly regression validation"
+        verbal:
+          examples: ["leadership speeches", "window guidance", "press conference remarks"]
+          routing: log_only
+          note: "Recorded as [SIGNAL], no update triggered"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Monitoring Point 3.5: Geopolitical Risk Premium
+# Orthogonal factor — affects risk discount channel's ERP component
+# ─────────────────────────────────────────────────────────────────────────
+
+mp_3_5_geopolitical:
+  scheduled_sources: []  # Event-driven only
+
+  event_driven_sources:
+    - source: reuters
+      authority_tier: tier_c
+      keywords:
+        - "Taiwan Strait"
+        - "US-China tech war"
+        - "semiconductor sanctions"
+        - "SWIFT exclusion"
+        - "entity list"
+      classification: verbal
+      routing: log_only
+
+    - source: mfa_china
+      authority_tier: tier_a
+      keywords:
+        - "台海"
+        - "中美关系"
+        - "制裁"
+        - "反制"
+      classification: regulatory
+      routing: tier2
+
+    - source: white_house
+      authority_tier: tier_s
+      keywords:
+        - "China sanctions"
+        - "entity list"
+        - "trade restrictions"
+        - "executive order China"
+      classification: regulatory
+      routing: tier2
+
+    - source: us_treasury
+      authority_tier: tier_a
+      keywords:
+        - "OFAC"
+        - "entity list"
+        - "sanctions"
+        - "currency manipulator"
+      classification: regulatory
+      routing: tier2
+
+    - source: ustr
+      authority_tier: tier_a
+      keywords:
+        - "Section 301"
+        - "tariff"
+        - "trade investigation"
+        - "China trade"
+      classification: regulatory
+      routing: tier2
+
+  special_handling:
+    - pattern: risk_level_jump
+      trigger: "Risk level jumps from 'elevated' to 'crisis' (e.g., military incident, SWIFT exclusion threat materialized)"
+      classification: regulatory
+      routing: tier3
+      feynman_protocol: true
+      framework_impact: "Spikes ERP independent of Fed policy — orthogonal transmission channel"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Monitoring Point 3.6: FOMC Communication Paradigm
+# Connects to ADR-008 Governance Paradigm Master Switch
+# ─────────────────────────────────────────────────────────────────────────
+
+mp_3_6_fomc_paradigm:
+  scheduled_sources:
+    - source: fed
+      authority_tier: tier_s
+      frequency: every_6_weeks
+      publication: "FOMC statement"
+      url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+      keywords:
+        - "federal funds rate"
+        - "balance sheet"
+        - "forward guidance"
+      classification: regulatory
+      routing: tier2
+      special_processing: fomc_statement_diff
+
+    - source: fed
+      authority_tier: tier_s
+      frequency: 3_weeks_after_meeting
+      publication: "FOMC minutes"
+      keywords:
+        - "participants discussed"
+        - "participants judged"
+        - "various participants"
+      classification: regulatory
+      routing: tier2
+
+    - source: fed
+      authority_tier: tier_s
+      frequency: quarterly
+      publication: "Summary of Economic Projections (SEP)"
+      keywords:
+        - "dot plot"
+        - "economic projections"
+        - "federal funds rate projection"
+      classification: regulatory
+      routing: tier2
+
+    - source: fed
+      authority_tier: tier_s
+      frequency: semi_annual
+      publication: "Monetary Policy Report + Chair testimony (Humphrey-Hawkins)"
+      keywords:
+        - "monetary policy report"
+        - "testimony"
+      classification: regulatory
+      routing: tier2
+
+    - source: fed
+      authority_tier: tier_s
+      frequency: 8_times_per_year
+      publication: "Beige Book"
+      keywords:
+        - "economic conditions"
+        - "district report"
+      classification: data
+      routing: tier1
+
+  event_driven_sources:
+    - source: fed
+      authority_tier: tier_s
+      keywords:
+        - "emergency action"
+        - "unscheduled statement"
+        - "emergency meeting"
+      classification: regulatory
+      routing: tier3
+      feynman_protocol: true
+
+    - source: reuters
+      authority_tier: tier_c
+      keywords:
+        - "Fed chair"
+        - "forward guidance"
+        - "dot plot"
+        - "Powell"
+      classification: verbal
+      routing: log_only
+
+  special_processing:
+    fomc_statement_diff:
+      method: "Sentence-level comparison with previous FOMC statement"
+      storage: "Each statement stored as versioned document with date, full text, parsed sentence list"
+      change_types:
+        addition:
+          description: "New concern, new tool, new risk mentioned"
+          tier3_trigger: false
+          tier2_trigger: true
+        deletion:
+          description: "Abandoned guidance, removed concern"
+          tier3_trigger: true
+          tier2_trigger: false
+          feynman_protocol: true
+          note: "Deletion of forward guidance language is the strongest signal of governance paradigm shift"
+        modification:
+          description: "Qualifier changes (e.g., 'moderate' → 'significant')"
+          tier3_trigger: false
+          tier2_trigger: true
+        structural:
+          description: "Section reordering, new sections, removed sections"
+          tier3_trigger: true
+          tier2_trigger: false
+          feynman_protocol: true
+
+      governance_paradigm_mapping:
+        forward_guidance_mode:
+          signals: ["Explicit path language present/absent", "'considerable period' vs 'meeting-by-meeting'"]
+          tier3_on: deletion
+        data_dependence_language:
+          signals: ["'data-dependent' phrasing changes", "Specific data thresholds mentioned/removed"]
+          tier3_on: structural
+        balance_sheet_communication:
+          signals: ["QT/QE language changes", "Runoff pace language", "'substantial reserves' threshold"]
+          tier3_on: deletion
+        risk_balance_framing:
+          signals: ["Risk balance shifts ('balanced' → 'tilted')", "New risk categories"]
+          tier3_on: structural
+
+      tier3_trigger_rule: >
+        Any 'structural' change OR any 'deletion' in forward_guidance_mode
+        or balance_sheet_communication → triggers Tier 3 bidirectional Feynman.
+        'modification' and 'addition' alone → Tier 2 event-driven re-evaluation.
+
+      downstream_connection: >
+        If Tier 3 Feynman protocol confirms governance paradigm shift,
+        update governance_paradigm.md (ADR-008 master switch file).
+        This cascades to the entire CBC Simulator behavior.
+
+# ─────────────────────────────────────────────────────────────────────────
+# Monitoring Point 3.7: Trade Settlement Currency Structure
+# RMB internationalization — partial exit from Rey's dilemma
+# ─────────────────────────────────────────────────────────────────────────
+
+mp_3_7_trade_settlement:
+  scheduled_sources:
+    - source: pboc
+      authority_tier: tier_s
+      frequency: semi_annual
+      publication: "RMB Internationalization Report"
+      keywords:
+        - "人民币国际化"
+        - "RMB internationalization"
+      classification: regulatory
+      routing: tier2
+
+    - source: safe
+      authority_tier: tier_a
+      frequency: quarterly
+      publication: "Cross-border RMB settlement data"
+      keywords:
+        - "人民币跨境结算"
+        - "cross-border RMB"
+      classification: data
+      routing: tier1
+
+    - source: swift
+      authority_tier: tier_b
+      frequency: monthly
+      publication: "RMB payment share in global payments"
+      keywords:
+        - "RMB share"
+        - "RMB tracker"
+      classification: data
+      routing: tier1
+
+  event_driven_sources:
+    - source: reuters
+      authority_tier: tier_c
+      keywords:
+        - "petroyuan"
+        - "RMB settlement oil"
+        - "bilateral currency swap"
+        - "RMB clearing bank"
+      classification: verbal
+      routing: log_only
+
+    - source: xinhua
+      authority_tier: tier_c
+      keywords:
+        - "人民币结算"
+        - "双边本币互换"
+        - "人民币清算行"
+      classification: verbal
+      routing: log_only
+
+  special_handling:
+    - pattern: significant_rmb_share_change
+      trigger: "RMB settlement share in major commodity trade (oil, iron ore) increases >5pp"
+      classification: regulatory
+      routing: tier3
+      feynman_protocol: true
+      framework_impact: "Changes Mundell-Fleming currency regime parameter — PBoC gains partial independence from Fed"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Personnel Surveillance: Political Intelligence as Leading Indicator
+# Personnel changes activate watch mode, do NOT directly trigger Tier 3
+# ─────────────────────────────────────────────────────────────────────────
+
+personnel_surveillance:
+  description: >
+    Political intelligence (WHO is in power) is a leading indicator of
+    policy intelligence (WHAT policies emerge). A personnel change does NOT
+    directly trigger Tier 3 — it activates watch mode for the relevant
+    monitoring points, increasing event-driven scan sensitivity.
+
+  watch_mode_behavior:
+    frequency_increase: "Daily scan instead of continuous-monitoring threshold"
+    keyword_expansion: "Include new official's known policy preferences, past speeches, institutional affiliations"
+    expiry: "90 days OR first Tier S/A formal policy announcement from new official, whichever comes first"
+
+  tracked_positions:
+    - position: "Fed Chair"
+      authority: tier_s
+      on_change: "Governance paradigm review"
+      affected_monitoring_points:
+        - mp_3_6_fomc_paradigm
+      watch_mode_keywords:
+        - "new Fed chair"
+        - "Powell successor"
+        - "Fed chair nomination"
+
+    - position: "CSRC Chair"
+      authority: tier_s
+      on_change: "Regulatory framework review"
+      affected_monitoring_points:
+        - mp_3_4_regulatory_framework
+      watch_mode_keywords:
+        - "证监会主席"
+        - "CSRC chair"
+        - "new securities regulator"
+
+    - position: "PBoC Governor"
+      authority: tier_s
+      on_change: "Transmission pathway review"
+      affected_monitoring_points:
+        - mp_3_2_pboc_transmission
+      watch_mode_keywords:
+        - "央行行长"
+        - "PBoC governor"
+        - "central bank governor China"
+
+    - position: "US Treasury Secretary"
+      authority: tier_s
+      on_change: "Geopolitical + trade policy review"
+      affected_monitoring_points:
+        - mp_3_5_geopolitical
+        - mp_3_7_trade_settlement
+      watch_mode_keywords:
+        - "Treasury Secretary"
+        - "sanctions policy"
+        - "currency report"
+
+    - position: "USTR Representative"
+      authority: tier_a
+      on_change: "Trade policy review"
+      affected_monitoring_points:
+        - mp_3_5_geopolitical
+        - mp_3_7_trade_settlement
+      watch_mode_keywords:
+        - "USTR"
+        - "Trade Representative"
+        - "Section 301"
+
+    - position: "FSDC Chair"
+      authority: tier_s
+      on_change: "Cross-regulatory coordination review"
+      affected_monitoring_points:
+        - mp_3_4_regulatory_framework
+      watch_mode_keywords:
+        - "金融委主任"
+        - "FSDC chair"
+        - "financial stability"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Chinese Policy Intelligence: Multi-Layer Signal System
+# ─────────────────────────────────────────────────────────────────────────
+
+chinese_policy_intelligence:
+  description: >
+    Chinese policy direction is signaled through layers with different lead
+    times. The retrieval system must track all four layers, with Layer 1-2
+    serving as early warning that increases event-driven scan sensitivity.
+
+  multi_layer_signal_system:
+    - layer: 1
+      name: "最高领导讲话 (Leadership speeches)"
+      source_type: "Politburo meetings, major conferences, Central Economic Work Conference"
+      authority_tier: tier_s
+      lead_time: "6-12 months"
+      keywords:
+        - "政治局会议"
+        - "中央经济工作会议"
+        - "习近平讲话"
+      action: "Record as [STRATEGIC_SIGNAL], activate watch mode for affected monitoring points"
+      routing: log_only
+
+    - layer: 2
+      name: "党报社论 (State media editorials)"
+      source_type: "People's Daily front-page editorials, Xinhua commentaries, Qiushi articles"
+      authority_tier: tier_c
+      lead_time: "1-3 months"
+      keywords:
+        - "人民日报评论员"
+        - "新华社评论"
+        - "求是"
+      action: "Record as [POLICY_PREVIEW], increase event-driven scan sensitivity"
+      routing: log_only
+      note: >
+        These are the Chinese equivalent of 'trial balloon' — they preview
+        policy direction before formal announcement. High signal value despite
+        Tier C authority, because they are state-directed.
+
+    - layer: 3
+      name: "正式文件 (Formal documents)"
+      source_type: "State Council executive meetings, ministry documents, joint issuances"
+      authority_tier: tier_s
+      lead_time: "Immediate"
+      keywords:
+        - "国务院常务会议"
+        - "部委文件"
+        - "联合发文"
+      action: "Process through AI classification pipeline"
+      routing: tier2_or_tier3
+
+    - layer: 4
+      name: "窗口指导/实施细则 (Window guidance / Implementation rules)"
+      source_type: "Window guidance reported by media, implementation notices, detailed rules"
+      authority_tier: tier_c
+      lead_time: "Immediate"
+      keywords:
+        - "窗口指导"
+        - "实施细则"
+        - "监管要求"
+      action: "Record as [IMPLEMENTATION_SIGNAL]"
+      routing: log_only
+
+  special_sources:
+    - source: scio
+      authority_tier: tier_a
+      name: "国务院新闻办公室 (State Council Information Office)"
+      frequency: "event-driven (policy briefings)"
+      keywords:
+        - "政策吹风"
+        - "新闻发布会"
+        - "白皮书"
+      note: "Regular policy briefings where formal policy is communicated. Tier A authority."
+
+    - source: fsdc
+      authority_tier: tier_s
+      name: "金融委 (Financial Stability and Development Committee)"
+      frequency: "event-driven"
+      keywords:
+        - "金融委"
+        - "financial stability"
+        - "cross-regulatory"
+      note: >
+        Cross-regulatory coordination body. Statements signal coordination
+        across CSRC, CBIRC, and PBoC. High importance for Tier 3.4.
+
+    - source: ndrc
+      authority_tier: tier_a
+      name: "发改委 (National Development and Reform Commission)"
+      frequency: "event-driven"
+      keywords:
+        - "发改委"
+        - "产业政策"
+        - "投资项目"
+      note: >
+        Macro-economic planning body. Announcements on industrial policy,
+        investment approval, and project pipelines are leading indicators
+        for regulatory framework changes.
+
+# ─────────────────────────────────────────────────────────────────────────
+# Noise Filtering Mechanisms
+# ─────────────────────────────────────────────────────────────────────────
+
+noise_filtering:
+  source_authority_gate:
+    rule: >
+      Only Tier S/A sources can directly trigger Tier 3.
+      Tier C/D sources must first pass through AI classification, which
+      checks for corroboration from Tier S/A sources before escalating.
+      A Reuters headline alone NEVER triggers Tier 3 — it must be followed
+      by an official confirmation within a reasonable window (72 hours).
+
+  change_level_gate:
+    rule: >
+      Only 'legislative' and 'regulatory' level changes can trigger Tier 3.
+      'verbal' level changes (speeches, comments, editorials) are always
+      logged as [SIGNAL] with no action triggered.
+      This prevents leadership rhetoric from causing framework re-evaluation
+      before formal policy follows.
+
+  cooldown_period:
+    duration_days: 30
+    rule: >
+      After a Tier 3 trigger fires for a monitoring point, a 30-day cooldown
+      prevents re-triggering for the same point unless a HIGHER-LEVEL change
+      is detected (e.g., if 'regulatory' triggered Tier 3, only a subsequent
+      'legislative' change can re-trigger during cooldown).
+      This prevents the same structural change from being processed multiple
+      times as it cascades through media coverage.
+
+  keyword_specificity_rule:
+    rule: >
+      Keywords must be specific enough to avoid false positives.
+      Broad keywords ('Fed', '央行', 'stock market', 'A股') are excluded.
+      Specific phrases are required: 'forward guidance abandoned',
+      'SFISF扩容', '证券法修订', '资本账户开放'.
+      The keyword registry is reviewed quarterly for precision.
+
+# ─────────────────────────────────────────────────────────────────────────
+# Retrieval Workflow
+# ─────────────────────────────────────────────────────────────────────────
+
+retrieval_workflow:
+  step_1_scheduled_polling:
+    description: "Agent polls scheduled sources on their publication frequency"
+    implementation: "Cron-based recurring tasks"
+    action: "Check for new publications since last poll"
+    on_new_publication: "Route to Step 3 (AI Classification)"
+    frequency_matrix:
+      daily: ["HKEX Stock Connect data", "UST yields", "VIX", "USD index"]
+      weekly: ["State Council executive meeting summary", "Fed H.4.1 balance sheet"]
+      monthly: ["PBoC MLF/LPR", "NBS CPI/PPI", "BLS CPI/PCE", "SWIFT RMB share"]
+      quarterly: ["SAFE Balance of Payments", "PBoC Monetary Policy Report", "Contribution weight regression"]
+      semi_annual: ["PBoC RMB Internationalization Report", "Fed Monetary Policy Report"]
+      every_6_weeks: ["FOMC statement"]
+
+  step_2_event_driven_scan:
+    description: "Agent monitors event-driven sources for keyword matches"
+    implementation: "RSS feeds + web scraping with keyword monitoring"
+    action: "If keyword match found, extract full context including surrounding text"
+    on_match: "Route to Step 3 (AI Classification)"
+    corroboration_window: 72_hours
+    note: >
+      If a Tier C source reports a structural change, the system waits up to
+      72 hours for corroboration from a Tier S/A source before escalating.
+
+  step_3_ai_classification:
+    description: "AI classifies retrieved content along five dimensions"
+    dimensions:
+      - source_authority: "tier_s / tier_a / tier_b / tier_c / tier_d"
+      - change_level: "legislative / regulatory / verbal / data"
+      - monitoring_point: "mp_3_1 through mp_3_7"
+      - routing: "tier1 / tier2 / tier3 / log_only"
+      - urgency: "immediate / next_cycle / log_only"
+    implementation: "DeepSeek with structured classification prompt"
+    constraint: >
+      AI does NOT decide the routing rules — those are deterministic.
+      AI's role is to determine the VALUES of the five classification
+      dimensions. Routing is applied mechanically based on those values.
+
+  step_4_routing:
+    description: "Classified intelligence routes to appropriate processing tier"
+    routing_rules:
+      - condition: "tier_b source + data release"
+        route: "tier1_data_refresh"
+        processing: "Automated field update (ADR-012 Tier 1)"
+
+      - condition: "tier_a source + regulatory change"
+        route: "tier2_event_driven"
+        processing: "Semi-automated re-evaluation (ADR-012 Tier 2)"
+
+      - condition: "tier_s source + legislative change"
+        route: "tier3_regime_surveillance"
+        processing: "Bidirectional Feynman protocol (ADR-012 Tier 3)"
+
+      - condition: "tier_c/d source + breaking news"
+        route: "ai_classification_first"
+        processing: "AI determines if escalation warranted; requires Tier S/A corroboration within 72 hours"
+
+      - condition: "any source + verbal level change"
+        route: "log_only"
+        processing: "Record as [SIGNAL], no action triggered"
+
+      - condition: "mp_3_6 + fomc_statement_diff structural/deletion"
+        route: "tier3_regime_surveillance"
+        processing: "FOMC statement diff analysis → Tier 3 Feynman → governance_paradigm.md update"

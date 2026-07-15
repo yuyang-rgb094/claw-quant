@@ -1,0 +1,44 @@
+# Holdings Template — Pure Execution Record
+<!-- Schema: ADR-017 §4 | Belief fields live in thesis file Graham Region -->
+<!-- Copy to holdings/<ticker>_<id>.yaml and record actual trades -->
+<!-- One physical position = one holdings file, even with multiple thesis_refs -->
+
+holding_id: "[TICKER]_[SEQ]"
+ticker: "[TICKER.SH]"
+name: "[Company Name]"
+
+# Multiple thesis references (for cross-thesis overlap, ADR-017 §7)
+# One physical position — cannot be split into "thesis A shares" vs "thesis B shares"
+thesis_refs:
+  - thesis: "theses/[thesis_name].md"
+    role_in_thesis: core               # core / satellite / hedge
+    target_weight: 0.50
+
+# ─── Entry ───
+entry_date: YYYY-MM-DD
+entry_price: 0.0
+entry_quantity: 0
+entry_value: 0                          # entry_price × entry_quantity
+
+# ─── Current State ───
+position_state: open                    # open / reduced / closed
+current_quantity: 0
+current_price: 0.0
+current_value: 0.0
+unrealized_pnl: 0.0
+realized_pnl: 0.0                      # from reduced portions
+
+# ─── Risk Budget Consumption ───
+# Derived from thesis risk_budget, split by thesis_refs weights (ADR-017 §7b)
+# Weighted average across theses, NOT additive
+risk_budget_assigned: 0                # weighted across theses
+risk_budget_consumed: 0                # max floating loss observed
+risk_budget_remaining: 0
+
+# ─── Execution Log (append-only, never deleted) ───
+execution_log:
+  - date: YYYY-MM-DD
+    action: buy                         # buy / sell / risk_budget_update
+    quantity: 0
+    price: 0.0
+    reason_ref: "theses/[thesis].md # initial_entry"

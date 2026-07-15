@@ -1,0 +1,17 @@
+# Carhart Four-Factor Regression — Python Dependencies
+#
+# Install with:
+#   pip install -r requirements.txt
+#
+# On externally-managed Python (e.g., Homebrew, Debian 12+, PEP 668):
+#   pip install --break-system-packages -r requirements.txt
+#
+# Or create a virtual environment (recommended):
+#   python3 -m venv .venv
+#   source .venv/bin/activate
+#   pip install -r requirements.txt
+
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+statsmodels>=0.14.0

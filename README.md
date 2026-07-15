@@ -1,227 +1,252 @@
-# Serenity Chokepoint Investing Framework (Enhanced v2.1)
+# Claw Quant — 多层投资智能体框架 | Multi-Layer Investment Agent Framework
 
-> **Find the bottleneck first. Find the listed exposure second. Verify through evidence third. Validate with statistics fourth. Size by alpha significance fifth.**
+> 基于 A 股的结构化投资研究与组合管理框架，专为 AI Agent 操作设计。
 >
-> 先找到真正的瓶颈。再找到上市企业的敞口。然后通过证据验证。再用统计方法检验。最后根据alpha显著性确定仓位。
+> A structured investment research and portfolio management framework for A-share equities,
+> designed for AI Agent operation (OpenClaw / Claude Code / similar).
 
 ---
 
-## Overview
+## 架构 | Architecture
 
-An enhanced research skill for AI infrastructure supply-chain chokepoint investing, compatible with **OpenClaw / Hermes** agent platforms.
+```
+Fisher (Layer 0)    → SFM (Layer 1)     → Graham (Layer 2)   → Markowitz (Layer 3)
+货币环境              因子流形              投资信念形成            组合构建
+Monetary Env          Factor Manifold      Belief Formation      Portfolio + Alpha Capture
+      ↑                                                                     ↓
+      └──────────── Damodaran 横切监管层 · Cross-Section Supervisor (ADR-018) ──────────┘
+                     7 项组合约束 · 信念池 · 持仓池 · 前瞻估值
+```
 
-This is NOT a buy/sell recommendation engine. It is a structured research workflow that helps an agent:
-1. Identify whether a company sits inside a real supply-chain bottleneck
-2. Generate a **testable hypothesis** about abnormal alpha
-3. **Verify the hypothesis with code** (Fama-MacBeth regression, Information Ratio)
-4. Size positions based on **statistical evidence**
+### 各层职责 | Layer Responsibilities
 
-一套增强版AI基础设施供应链瓶颈投资研究技能，兼容 **OpenClaw / Hermes** 智能体平台。
+| Layer | ADR | 职责 | 关键输出 |
+|-------|-----|------|----------|
+| **Fisher** | 011/012/013 | 货币环境 (Mundell-Fleming / Rey) | `fisher_interface` (≤400 tokens) |
+| **SFM** | 014/015 | 因子流形状态 (Sharpe-Fama-Merton) | `sfm_interface` (≤400 tokens) |
+| **Graham** | 016/009/010 | 投资信念形成 | Thesis file (Graham + Markowitz Region) |
+| **Markowitz** | 017 | 组合构建 + Alpha 捕获 | Holdings file + Capital Allocation Registry |
+| **Damodaran** | 018 | 横切监管层 | 7 约束, 前瞻估值 |
+| **WalkThrough** | 019 | Graham→Markowitz 硬门 | 因子来源/信念审计/可证伪性验证 |
 
-这不是一个买入/卖出推荐引擎。它是一个结构化研究工作流，帮助智能体：
-1. 识别一家公司是否处于真正的供应链瓶颈中
-2. 生成关于异常alpha的**可检验假设**
-3. **用代码验证假设**（Fama-MacBeth回归、信息比率）
-4. 基于**统计证据**确定仓位
+### 信息流 | Information Flow
+
+信息**只向下流动**，上游层级不能修改下游层级的状态。
+Information flows **DOWN only**. No upstream layer can modify a downstream layer's state.
+
+Damodaran 横切所有层，作为裁决者（监控和标记，不做决策）。
+Damodaran cuts horizontally as an Adjudicator (monitors and flags, does not decide).
 
 ---
 
-## What's New in v2.1
-
-### v2.1: LLM Qualitative + Code Quantitative Architecture
-
-**v2.0 Problem:** Multiplicative probability model `P(is_bottleneck) × P(mispriced) × P(catalyst) × P(liquidity)` produced excessive false negatives. Four dimensions each at 0.7 scored 0.24 — classifying a "good" opportunity as "barely interesting." LLMs are poor at probability calibration, and averaging noisy estimates further dilutes signal in low-SNR markets.
-
-**v2.0问题：** 乘法概率模型产生过度假阴性。四个维度各0.7得分仅0.24——将"不错"的机会归类为" barely interesting"。LLM概率校准能力差，在低信噪比市场中平均化噪声估计进一步稀释信号。
-
-**v2.1 Solution:** Two-layer architecture:
-
-**Layer 1 — LLM Qualitative (Hypothesis Generation):**
-- Identify supertrend, validate process node, score chokepoint quality
-- Assess evidence stage, cross-validate supply chain, classify bet type
-- Generate testable hypothesis: "This company has abnormal alpha not explained by the four-factor model"
-
-**Layer 2 — Code Quantitative (Hypothesis Testing):**
-- Pull 3-5 years historical returns + four-factor data (MKT, SMB, HML, MOM)
-- Run Fama-MacBeth regression: `R_i - R_f = α + β₁·MKT + β₂·SMB + β₃·HML + β₄·MOM + ε`
-- Test H₀: α = 0
-- Compute **Information Ratio**: `IR = α / σ(ε)`
-- Run GMM robustness check
-
-**Layer 3 — LLM Synthesis (Interpretation):**
-- Does statistical evidence support the qualitative hypothesis?
-- Is α economically meaningful given the target holding period?
-- Final classification based on BOTH qualitative and quantitative evidence
-
-**v2.1解决方案：** 双层架构：
-- **层1**——LLM定性（假设生成）：识别趋势、验证节点、评分瓶颈、生成分子假设
-- **层2**——代码定量（假设检验）：拉数据、跑回归、算IR、做稳健性检验
-- **层3**——LLM综合（解读）：统计证据是否支持定性假设？alpha是否经济显著？
-
-**Hard Constraints:**
-- Chokepoint score < 12 → Reject
-- α not significant (p > 0.05) → Downgrade to "Watchlist" or "Avoid"
-- IR < 0.3 → Reject — alpha not economically meaningful
-- Any qualitative dimension < 0.3 (e.g., liquidity) → Reject
-
-**Fallback:** If code execution unavailable, LLM performs qualitative-only with explicit warning and position sizing capped at 50%.
-
----
-
-### v2.0 Features (Retained)
-
-### 2. Supply-Chain Ontology by Process Node / 按工艺节点的供应链本体
-
-**Original (v1.0):** Grouped "InP, GaAs, SOI, substrates, epitaxy wafers" into a single "Materials layer." This conflated upstream substrate (e.g., 鑫耀半导) with downstream epitaxy (e.g., 三安光电).
-
-**Enhanced (v2.0+):** Reclassifies by process node:
-```
-Raw Material → Substrate → Epitaxy → Device Fabrication
-→ Module Assembly → System Integration
-```
-
-### 3. Evidence Stage Transition Map / 证据阶段转移图
-
-Dynamic stage map with transition probabilities:
-```
-Concept → Sample Submission → Pilot Order → Mass Production → Primary/Exclusive Supplier
-   C级         C+级            B级           B+/A-级              A级
-```
-
-### 4. Cross-Validation Layer / 交叉验证层
-
-Compares financials across supply chain: target company, downstream customers, upstream suppliers. Detects resonance signals and divergence signals.
-
-### 5. Fact-Opinion-Inference Tagging with Triangulation / 事实-观点-推断标注与三角验证
-
-Dual-layer verification: `[FACT:source]`, `[OPINION:holder]`, `[INFERENCE:chain]`, `[TRIANGULATED_FACT]`.
-
-### 6. Catalyst-Driven Position Sizing / 催化剂驱动仓位管理
-
-Bet-type classification with **weighted (not multiplicative)** adjustments and hard floor:
-
-| Bet Type | Holding Period | Base Size |
-|----------|---------------|-----------|
-| Super Beta | 2-5 years | 8%-15% |
-| Catalyst Alpha | 1-4 quarters | 3%-8% |
-| Event-Driven | 0-3 months | 1%-4% |
-
-Adjustments are **absolute percentage point modifiers** (e.g., -1%, -2%) with hard floor at max(Base × 25%, 0.5%).
-
----
-
-## Core Framework
-
-### Layer 1: Bottleneck Identification (Hard Filter)
-
-Score using 10 questions (0=No, 1=Partially, 2=Yes). Total: 20 points.
-
-| Score | Classification | Action |
-|-------|---------------|--------|
-| 16-20 | Strong chokepoint | Proceed to Layer 2 |
-| 12-15 | Medium chokepoint | Proceed with caution |
-| 8-11 | Weak chokepoint | Reject unless exceptional |
-| 0-7 | Not a chokepoint | Reject |
-
-### Layer 2: Alpha Verification (Code-Driven Quantitative)
-
-**Requires code execution.** Spawn Quantitative Verification Subagent:
-
-1. **Data Pull:** 3-5 years returns + four-factor data (MKT, SMB, HML, MOM)
-2. **Fama-MacBeth Regression:** `R_i - R_f = α + β₁·MKT + β₂·SMB + β₃·HML + β₄·MOM + ε`
-3. **Significance Test:** H₀: α = 0
-4. **Information Ratio:** `IR = α / σ(ε)`
-
-| IR | Interpretation | Action |
-|----|---------------|--------|
-| IR > 1.0 | Strong alpha | High-conviction opportunity |
-| 0.5 < IR < 1.0 | Moderate alpha | Attractive but monitor |
-| 0.3 < IR < 0.5 | Weak alpha | Small position only |
-| IR < 0.3 | Alpha too small | Reject |
-
-5. **GMM Robustness Check:** Verify alpha persistence across sub-periods
-
-### Layer 3: Synthesis
-
-Compare qualitative hypothesis with quantitative results. Final classification:
-
-| Condition | Classification |
-|-----------|---------------|
-| α sig (p<0.05) + IR>1.0 + GMM persistent | **High-conviction** |
-| α sig (p<0.05) + 0.5<IR<1.0 | **Attractive, monitor** |
-| α marginally sig (p<0.10) + 0.3<IR<0.5 | **Small position only** |
-| α not sig OR IR<0.3 OR GMM non-persistent | **Avoid / Watchlist** |
-
----
-
-## Repository Structure
+## 仓库结构 | Repository Structure
 
 ```
-serenity-chokepoint-investing-enhanced/
-├── README.md                          # This file
-├── CONTEXT.md                         # Domain glossary and key decisions
-├── LICENSE                            # MIT License
+Claw Quant/
+├── CLAUDE.md                                # Agent 配置 | Agent configuration
+├── CONTEXT.md                               # 领域术语表 + 设计原则 | Glossary + principles
+├── fisher_state.md                          # Layer 0 状态 (ADR-011)
+├── sfm_state.md                             # Layer 1 状态 (ADR-014, 4 modules)
+├── pyproject.toml                           # Python 包配置 | Package config
+├── LICENSE                                  # MIT
+│
+├── claw_quant/                              # Python 包 | Python package
+│   ├── pipeline.py                          # 全流程编排 | Full pipeline orchestrator
+│   ├── refresh.py                           # 层级刷新管理 | Layer refresh manager
+│   ├── freshness.py                         # 数据新鲜度追踪 | Freshness tracker
+│   ├── scheduler.py                         # 定时任务调度 | Scheduler
+│   ├── sfm_engine.py                        # SFM 引擎 | SFM engine
+│   ├── graham_engine.py                     # Graham 引擎 | Graham engine
+│   ├── markowitz_engine.py                  # Markowitz 引擎 | Markowitz engine
+│   ├── walkthrough.py                       # 审计硬门 | Walk-through audit gate
+│   ├── agent_interface.py                   # Agent 接口 | Agent interface
+│   ├── validation.py                        # 验证工具 | Validation utilities
+│   ├── validation_loop.py                   # 验证循环 | Validation loop
+│   ├── metrics_tracker.py                  # 指标追踪 | Metrics tracker
+│   ├── calibration.py                       # 校准 | Calibration
+│   ├── ab_test.py                           # 接口 A/B 测试 | Interface A/B test
+│   ├── config.py                            # 全局配置 | Global config
+│   ├── state_init.py                        # 状态初始化 | State initialization
+│   ├── fisher_automation.py                 # Fisher 自动化 | Fisher automation
+│   ├── sfm_updater.py                       # SFM 更新器 | SFM updater
+│   ├── walkthrough.py                       # 走查引擎 | Walk-through engine
+│   ├── data_provider.py                     # 数据提供者基类 | Data provider base
+│   ├── data_factory.py                      # 数据工厂 | Data factory
+│   ├── data_hybrid.py                       # 混合数据源 | Hybrid provider (Wind→AKShare→Synthetic)
+│   ├── data_wind.py                         # Wind 数据源 | Wind data provider
+│   ├── data_akshare.py                      # AKShare 数据源 | AKShare provider
+│   ├── data_synthetic.py                    # 合成数据源 | Synthetic data provider
+│   ├── database.py                           # 数据库工具 | Database utilities
+│   ├── backtest/                            # 回测模块 | Backtesting
+│   │   ├── engine.py                        # 回测引擎 | Backtest engine
+│   │   ├── data_loader.py                   # 历史数据加载 | Historical data loader
+│   │   ├── performance.py                   # 业绩分析 | Performance analysis
+│   │   └── report.py                        # 回测报告 | Backtest report
+│   └── synthetic.py                         # 合成数据生成 | Synthetic data generation
+│
 ├── docs/
-│   └── adr/
-│       ├── 0001-two-stage-multiplicative-model.md  # Revised v2.1
-│       ├── 0002-supply-chain-ontology-by-process-node.md
-│       ├── 0003-evidence-stage-transition-map.md
-│       ├── 0004-fact-opinion-triangulation.md
-│       ├── 0005-cross-validation-layer.md
-│       └── 0006-catalyst-driven-position-sizing.md
+│   ├── adr/                                 # 18 架构决策记录 | Architecture Decision Records
+│   │   ├── 0001-0008/                       # 遗留 ADR | Legacy (chokepoint framework)
+│   │   ├── 0009-holding-file-six-principles.md
+│   │   ├── 0010-belief-anchored-risk-system.md
+│   │   ├── 0011-fisher-layer-mundell-fleming.md
+│   │   ├── 0012-fisher-layer-update-protocol.md
+│   │   ├── 0013-intelligence-retrieval-system.md
+│   │   ├── 0014-sfm-layer-manifold-state.md
+│   │   ├── 0015-sfm-layer-data-pipeline.md
+│   │   ├── 0016-graham-layer-thesis-architecture.md
+│   │   ├── 0017-markowitz-layer-portfolio-construction.md
+│   │   └── 0018-damodaran-layer-cross-section-supervisor.md
+│   └── architecture-overview.html           # 交互式架构图 | Interactive architecture diagram
+│
+├── scripts/                                 # 离线批处理脚本 | Offline batch scripts
+│   ├── carhart_regression.py                # Module 1a: Carhart 四因子回归
+│   ├── factor_ic_engine.py                  # Module 1b: IC + 半衰期估计
+│   ├── long_short_cost.py                   # Module 2a: 拥挤度指标
+│   ├── options_proxy.py                     # Module 1c: 久期代理
+│   ├── cffex_scraper.py                     # Module 3b: 中金所期货持仓
+│   └── requirements.txt
+│
+├── templates/                                # 模板文件 | Templates
+│   ├── thesis_template.md                   # → theses/<name>.md
+│   ├── holdings_template.yaml               # → holdings/<ticker>_<id>.yaml
+│   ├── capital_allocation_registry_template.md
+│   └── damodaran_state_template.md
+│
+├── theses/                                  # 活跃 thesis (运行时) | Active theses (runtime)
+├── holdings/                                # 活跃持仓 (运行时) | Active holdings (runtime)
+├── portfolio/
+│   ├── capital_allocation_registry.md       # 跨 thesis 资本状态
+│   └── damodaran_state.md                   # 横切监管层状态
+│
+├── tests/                                   # 271 tests (pytest)
+│   ├── conftest.py                          # pytest 配置
+│   ├── helpers.py                           # YAML schema 验证工具
+│   ├── test_fisher_state.py                 # Fisher Layer schema (ADR-011)
+│   ├── test_state_files.py                  # Interface outputs + SFM modules
+│   ├── test_thesis_template.py              # Thesis Graham + Markowitz Region
+│   ├── test_holdings_template.py            # Holdings belief-action separation
+│   ├── test_capital_allocation_registry.py  # CAR schema (ADR-017)
+│   ├── test_damodaran_state.py              # Damodaran 7 constraints (ADR-018)
+│   ├── test_carhart_regression.py           # Carhart regression core functions
+│   ├── test_factor_ic_engine.py             # IC + half-life core functions
+│   ├── test_pipeline.py                     # Pipeline orchestrator
+│   ├── test_refresh.py                      # Layer refresh manager
+│   ├── test_validation.py                   # Validation loop + metrics
+│   ├── test_walkthrough.py                  # Walk-through audit gate
+│   ├── test_hybrid_provider.py              # Hybrid data provider
+│   └── test_backtest_engine.py              # Backtest engine
+│
+├── .github/workflows/validate.yml           # CI/CD pipeline
+├── world/
+│   └── intelligence_source_registry.yaml    # ADR-013 信息源层级
+│
 └── serenity-chokepoint-investing/
-    └── SKILL.md                       # Deployable skill file (v2.1)
+    └── SKILL.md                             # 遗留技能 | Legacy skill (ADR-001 to 008)
 ```
 
 ---
 
-## Installation
+## 核心设计决策 | Key Design Decisions
 
+### 信念-行为分离 | Belief-Action Separation (ADR-009)
+Thesis 文件包含信念 (Graham Region) 和组合 (Markowitz Region)。
+Holdings 文件是纯执行记录，不含任何信念字段。
+
+### Alpha 捕获计划 | Alpha Capture Schedule (ADR-017)
+Kelly 动态获利了结：随着 expectation_gap 闭合 (30%→50%→75%→90%)，
+仓位按比例缩小。与信念正交——thesis 可以 100% 正确同时仓位缩小。
+释放的资本视为同质资金，重新进入框架正常流程。
+
+### Graham 接口契约 | Graham Interface Contract (ADR-016)
+每层上游输出 ≤400 token 压缩接口（各 6 个字段），
+消除长度偏差和语义强度偏差。
+
+### Damodaran 7 约束 | 7 Constraints (ADR-018)
+1. 最多 5 个活跃 thesis
+2. 最多 15 个独立标的
+3. 单一 thesis ≤ 40%
+4. 单一标的 ≤ 15%
+5. 单一久期桶 ≤ 60%
+6. 单一行业 ≤ 50%
+7. Fisher 最大总权益暴露 (来自 fisher_state.md)
+
+### 走查审计门 | Walk-Through Audit Gate (ADR-019)
+Graham→Markowitz 之间的硬门，验证因子来源可追溯、信念可证伪、
+声明有据可查、标的合法、跨层一致性。
+
+---
+
+## 快速开始 | Quick Start
+
+### 安装 | Install
 ```bash
-git clone https://github.com/yuyang-rgb094/serenity-chokepoint-investing-enhanced.git
-cp -r serenity-chokepoint-investing-enhanced/serenity-chokepoint-investing \
-  /path/to/your/openclaw/skills/
+git clone https://github.com/yuyang-rgb094/claw-quant.git
+cd claw-quant
+pip install -e ".[dev]"
 ```
 
+### 运行测试 | Run Tests
+```bash
+python -m pytest tests/ -v
+# 271 tests, all passing
+```
+
+### 运行管线 | Run Pipeline
+```bash
+# 设置 Wind API Key (可选，不设则使用合成数据)
+export WIND_API_KEY="your_key_here"
+
+# 运行完整管线
+python -c "
+from claw_quant.pipeline import PipelineRunner
+runner = PipelineRunner()
+output = runner.run()
+print(output.summary)
+"
+```
+
+### 运行离线脚本 | Run Offline Scripts
+```bash
+# Carhart regression (weekly)
+python scripts/carhart_regression.py --portfolio "600519.SH,000858.SZ"
+
+# Factor IC engine (weekly)
+python scripts/factor_ic_engine.py --factor all
+
+# Crowding metrics (daily)
+python scripts/long_short_cost.py --factor momentum,value,quality
+
+# CFFEX futures (daily after close)
+python scripts/cffex_scraper.py --date yesterday
+```
+
+### 创建新 Thesis | Create a New Thesis
+1. 复制 `templates/thesis_template.md` → `theses/<name>.md`
+2. 填充 Graham Region（基本面分析）
+3. 填充 Markowitz Region（组合构成 + 风险预算 + Alpha 捕获计划）
+4. 运行 Damodaran 约束检查
+
 ---
 
-## Requirements
+## 依赖 | Requirements
 
-- **Web search tools** (DuckDuckGo / EXA / similar)
-- **Financial data API** (Wind / Bloomberg / Choice / Yahoo Finance)
-- **Subagent spawning** for verification AND quantitative analysis
-- **Code execution environment** (Python with pandas, statsmodels, numpy)
-
----
-
-## Best Use Cases
-
-- AI infrastructure / Semiconductors / HBM / DRAM / NAND
-- Advanced packaging (CoWoS, ABF, OSAT)
-- Optical modules / Silicon photonics / CPO
-- InP / GaAs / SOI **substrates** (NOT epitaxy)
-- Lasers / Data center power / Liquid cooling
-- AI data centers / Neocloud / GPU cloud
-- Robotics supply chain / High-volatility small-cap AI supply-chain stocks
+- Python 3.9+
+- pandas, numpy, scipy, statsmodels, pyyaml, requests, lxml
+- pytest (dev)
+- Wind API (optional — scripts include synthetic data fallback)
+- AKShare (optional — `pip install -e ".[akshare]"`)
 
 ---
 
-## Safety Notes
+## 免责声明 | Disclaimer
 
-The SKILL.md file contains no executable code. However, v2.1 REQUIRES the agent to spawn a **Quantitative Verification Subagent** that writes and executes Python code for statistical analysis (Fama-MacBeth regression, GMM). The Python code pulls historical data via financial APIs but does NOT access wallets, credentials, or brokerage accounts.
+本框架仅供教育和研究目的。不提供财务建议、投资推荐或个性化组合管理服务。
+所有输出应视为研究辅助，而非买卖指令。
 
----
-
-## Disclaimer
-
-This skill is for educational and research workflow purposes only. It does not provide financial advice, investment recommendations, or personalized portfolio management. All outputs should be treated as research assistance, not buy or sell instructions. Investing involves risk, including the possible loss of principal. Always do your own due diligence.
-
----
-
-## Credits
-
-- **Original framework**: [leospark/serenity-chokepoint-investing-skills](https://github.com/leospark/serenity-chokepoint-investing-skills) by hart-li
-- **Enhanced v2.0-v2.1**: Domain expert collaboration with financial industry practitioner insights on factor exposure dynamics, catalyst windows, cross-validation, and quantitative verification methodologies.
+This framework is for educational and research purposes only. It does not provide
+financial advice, investment recommendations, or personalized portfolio management.
+All outputs should be treated as research assistance, not buy or sell instructions.
 
 ---
 
