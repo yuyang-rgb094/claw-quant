@@ -145,7 +145,7 @@ pip install "akshare>=1.14.0"
 # Install Wind MCP (institutional, requires API key)
 git clone https://github.com/Wind-Information-Co-Ltd/wind-skills
 cd wind-skills && npm install
-# API key is pre-configured in claw_quant/config.py
+# API key is read from environment variable: export WIND_API_KEY="your_key"
 
 # Initialize all layers (~2-5 minutes, network-dependent)
 python3 -c "
