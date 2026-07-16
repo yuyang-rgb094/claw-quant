@@ -3,390 +3,641 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claw Quant — Architecture & Acceptance Report</title>
+<title>Claw Quant — Architecture | 多层投资智能体架构图</title>
 <style>
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface-2: #232733;
-  --border: #2d3142;
-  --text: #e4e6eb;
-  --text-muted: #8b8fa3;
-  --brand: #7c6ef0;
-  --brand-light: #9d8ff5;
+  --bg: #0a0c12;
+  --bg-grad: #0d1019;
+  --surface: #141822;
+  --surface-2: #1a1f2e;
+  --surface-3: #232938;
+  --border: #2a3042;
+  --border-light: #363d52;
+  --text: #e8eaf0;
+  --text-muted: #88909f;
+  --text-dim: #5a6175;
+  --brand: #7b6ef6;
+  --brand-light: #a99ffe;
   --accent: #4dd4ac;
-  --warn: #f0a44d;
+  --warn: #f0b04d;
   --danger: #ef5b5b;
-  --pass: #4dd4ac;
-  --gap: #f0a44d;
-  --missing: #ef5b5b;
-  --chart-1: #7c6ef0;
-  --chart-2: #4dd4ac;
-  --chart-3: #f0a44d;
-  --chart-4: #5b9fef;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "SF Mono", "Fira Code", monospace;
+  --info: #5b9fef;
+  --fisher: #5b9fef;
+  --sfm: #7b6ef6;
+  --graham: #4dd4ac;
+  --markowitz: #f0b04d;
+  --damodaran: #ef5b5b;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+  --font-serif: "New York", "Iowan Old Style", "Apple Garamond", Georgia, serif;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg); color: var(--text); font-family: var(--font-sans); line-height: 1.6; padding: 24px; max-width: 1200px; margin: 0 auto; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  background-image: radial-gradient(ellipse at top, var(--bg-grad) 0%, var(--bg) 70%);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 1180px; margin: 0 auto; padding: 40px 32px 80px; }
 
-h1 { font-size: 28px; margin-bottom: 4px; }
-h2 { font-size: 22px; margin-top: 32px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-h3 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; color: var(--brand-light); }
-.subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+/* ─── Header ─── */
+.header { text-align: center; margin-bottom: 48px; }
+.header h1 {
+  font-size: 32px; font-weight: 700; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--brand-light), var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.header .subtitle { color: var(--text-muted); font-size: 14px; }
+.header .meta { display: flex; justify-content: center; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+.header .meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+.header .meta-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 768px) { .card-grid { grid-template-columns: 1fr; } }
+/* ─── Architecture Diagram ─── */
+.arch-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 36px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+.arch-wrap::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand), transparent);
+  opacity: 0.5;
+}
+.arch-title { text-align: center; font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; }
 
-.status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.status-pass { background: rgba(77,212,172,0.15); color: var(--pass); }
-.status-gap { background: rgba(240,164,77,0.15); color: var(--gap); }
-.status-missing { background: rgba(239,91,91,0.15); color: var(--missing); }
+/* ─── Pipeline Row ─── */
+.pipeline { display: flex; align-items: stretch; gap: 0; position: relative; margin-bottom: 0; }
+.layer-card {
+  flex: 1; min-width: 0;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  padding: 24px 20px;
+  position: relative;
+  transition: transform 0.2s, border-color 0.2s;
+  z-index: 2;
+}
+.layer-card:hover { transform: translateY(-4px); }
+.layer-card[data-layer="fisher"] { border-top: 3px solid var(--fisher); }
+.layer-card[data-layer="sfm"] { border-top: 3px solid var(--sfm); }
+.layer-card[data-layer="graham"] { border-top: 3px solid var(--graham); }
+.layer-card[data-layer="markowitz"] { border-top: 3px solid var(--markowitz); }
 
-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
-th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
-tr:hover td { background: var(--surface-2); }
+.layer-num {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.layer-card[data-layer="fisher"] .layer-num { color: var(--fisher); }
+.layer-card[data-layer="sfm"] .layer-num { color: var(--sfm); }
+.layer-card[data-layer="graham"] .layer-num { color: var(--graham); }
+.layer-card[data-layer="markowitz"] .layer-num { color: var(--markowitz); }
 
-/* Architecture diagram */
-.arch-diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
-.arch-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
-.arch-box { padding: 12px 16px; border-radius: 10px; border: 2px solid; text-align: center; min-width: 160px; }
-.arch-box-fisher { border-color: var(--chart-4); background: rgba(91,159,239,0.08); }
-.arch-box-sfm { border-color: var(--chart-1); background: rgba(124,110,240,0.08); }
-.arch-box-graham { border-color: var(--chart-2); background: rgba(77,212,172,0.08); }
-.arch-box-markowitz { border-color: var(--chart-3); background: rgba(240,164,77,0.08); }
-.arch-box-damodaran { border-color: var(--danger); background: rgba(239,91,91,0.08); border-style: dashed; }
-.arch-box-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-.arch-box-sub { font-size: 11px; color: var(--text-muted); }
-.arch-arrow { color: var(--text-muted); font-size: 20px; }
-.arch-damodaran-bar { border: 2px dashed var(--danger); border-radius: 10px; padding: 8px 16px; text-align: center; color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 12px; }
+.layer-name {
+  font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--text);
+}
+.layer-name .full-name { font-size: 12px; font-weight: 400; color: var(--text-muted); display: block; margin-top: 2px; }
 
-/* Progress bar */
-.progress-bar { background: var(--surface-2); border-radius: 999px; height: 8px; overflow: hidden; margin: 8px 0; }
-.progress-fill { height: 100%; border-radius: 999px; transition: width 0.3s; }
+.layer-scholars {
+  margin: 10px 0; padding: 10px 12px;
+  background: var(--surface-3);
+  border-radius: 8px;
+  border-left: 2px solid;
+}
+.layer-card[data-layer="sfm"] .layer-scholars { border-left-color: var(--sfm); }
+.layer-card[data-layer="fisher"] .layer-scholars { border-left-color: var(--fisher); }
+.layer-card[data-layer="graham"] .layer-scholars { border-left-color: var(--graham); }
+.layer-card[data-layer="markowitz"] .layer-scholars { border-left-color: var(--markowitz); }
 
-.metric-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
-.metric-row:last-child { border-bottom: none; }
-.metric-label { font-size: 13px; color: var(--text-muted); }
-.metric-value { font-size: 14px; font-weight: 600; }
+.scholar-row {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 12px; color: var(--text-muted);
+  padding: 3px 0;
+}
+.scholar-name { font-weight: 600; color: var(--text); font-family: var(--font-serif); font-size: 13px; }
+.scholar-year { color: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
+.scholar-const { color: var(--brand-light); font-size: 11px; }
 
-code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 12px; }
-.code-block { background: var(--surface-2); border-radius: 8px; padding: 12px 16px; font-family: var(--font-mono); font-size: 12px; overflow-x: auto; margin: 12px 0; }
+.layer-adr {
+  font-size: 10px; color: var(--text-dim);
+  font-family: var(--font-mono);
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
 
-.file-list { font-size: 12px; font-family: var(--font-mono); color: var(--text-muted); }
-.file-list li { padding: 2px 0; list-style: none; }
-.file-list .file-ok { color: var(--pass); }
-.file-list .file-tpl { color: var(--gap); }
+.layer-output {
+  margin-top: 8px;
+  font-size: 11px; color: var(--text-muted);
+}
+.layer-output code {
+  font-family: var(--font-mono);
+  background: var(--surface-3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--accent);
+}
 
-.legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; }
-.legend-item { display: flex; align-items: center; gap: 4px; }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+/* ─── Flow Arrows ─── */
+.flow-arrow {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 60px; position: relative; z-index: 1;
+}
+.flow-arrow svg { display: block; }
+.flow-label {
+  font-size: 10px; color: var(--text-dim);
+  font-family: var(--font-mono);
+  text-align: center; margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* ─── Damodaran Bar ─── */
+.damodaran-bar {
+  margin-top: 0;
+  border: 2px dashed var(--damodaran);
+  border-radius: 14px;
+  background: rgba(239, 91, 91, 0.04);
+  padding: 20px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative;
+}
+.damodaran-bar::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: -12px; transform: translateX(-50%);
+  background: var(--bg);
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--damodaran);
+  font-weight: 600;
+}
+.damodaran-label {
+  font-size: 15px; font-weight: 700; color: var(--damodaran);
+  display: flex; align-items: center; gap: 8px;
+}
+.damodaran-label .icon { font-size: 18px; }
+.damodaran-desc { font-size: 12px; color: var(--text-muted); }
+.damodaran-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.damodaran-tag {
+  font-size: 11px; padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(239, 91, 91, 0.1);
+  color: var(--damodaran);
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+/* ─── Vertical connectors from layers to Damodaran ─── */
+.damodaran-connectors {
+  display: flex; justify-content: space-around;
+  padding: 0 20px; margin-top: -1px;
+}
+.damodaran-connector {
+  width: 1px; height: 20px;
+  border-left: 2px dotted var(--damodaran);
+  opacity: 0.3;
+}
+
+/* ─── Info flow note ─── */
+.flow-note {
+  text-align: center; margin-top: 24px;
+  font-size: 12px; color: var(--text-dim);
+  display: flex; align-items: center; justify-content: center; gap: 24px;
+}
+.flow-note .pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px;
+  background: var(--surface-3); border: 1px solid var(--border);
+  font-size: 11px; color: var(--text-muted);
+}
+
+/* ─── Layer Detail Cards ─── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+@media (max-width: 860px) { .detail-grid { grid-template-columns: 1fr; } }
+
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+}
+.detail-card::before {
+  content: '';
+  position: absolute; top: 0; left: 24px; right: 24px;
+  height: 2px; border-radius: 2px;
+}
+.detail-card[data-color="fisher"]::before { background: var(--fisher); }
+.detail-card[data-color="sfm"]::before { background: var(--sfm); }
+.detail-card[data-color="graham"]::before { background: var(--graham); }
+.detail-card[data-color="markowitz"]::before { background: var(--markowitz); }
+.detail-card[data-color="damodaran"]::before { background: var(--damodaran); }
+
+.detail-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.detail-header h3 { font-size: 15px; font-weight: 700; }
+.detail-header .adr { font-size: 11px; color: var(--text-dim); font-family: var(--font-mono); }
+.detail-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+
+.detail-list { list-style: none; padding: 0; }
+.detail-list li {
+  font-size: 13px; color: var(--text-muted);
+  padding: 5px 0; padding-left: 18px;
+  position: relative;
+}
+.detail-list li::before {
+  content: ''; position: absolute; left: 0; top: 12px;
+  width: 6px; height: 6px; border-radius: 2px;
+}
+.detail-card[data-color="fisher"] .detail-list li::before { background: var(--fisher); }
+.detail-card[data-color="sfm"] .detail-list li::before { background: var(--sfm); }
+.detail-card[data-color="graham"] .detail-list li::before { background: var(--graham); }
+.detail-card[data-color="markowitz"] .detail-list li::before { background: var(--markowitz); }
+.detail-card[data-color="damodaran"] .detail-list li::before { background: var(--damodaran); }
+
+.detail-list code {
+  font-family: var(--font-mono); font-size: 11px;
+  background: var(--surface-3); padding: 1px 5px; border-radius: 3px;
+  color: var(--accent);
+}
+
+/* ─── Data Pipeline Strip ─── */
+.pipeline-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 40px;
+}
+.pipeline-strip h3 { font-size: 14px; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.pipeline-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pipeline-step {
+  flex: 1; min-width: 120px;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+}
+.pipeline-step .step-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.pipeline-step .step-meta { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: var(--font-mono); }
+.pipeline-arrow { color: var(--text-dim); font-size: 18px; }
+
+/* ─── Footer ─── */
+.footer {
+  text-align: center; margin-top: 48px;
+  font-size: 12px; color: var(--text-dim);
+  padding-top: 24px; border-top: 1px solid var(--border);
+}
+.footer a { color: var(--brand-light); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* ─── Responsive ─── */
+@media (max-width: 860px) {
+  .pipeline { flex-direction: column; gap: 0; }
+  .flow-arrow { flex-direction: row; min-width: 0; padding: 8px 0; }
+  .flow-arrow svg { transform: rotate(90deg); }
+  .damodaran-bar { flex-direction: column; gap: 12px; text-align: center; }
+  .container { padding: 24px 16px 60px; }
+}
 </style>
 </head>
 <body>
+<div class="container">
 
-<h1>Claw Quant — Multi-Layer Investment Agent Framework</h1>
-<p class="subtitle">Architecture & Acceptance Report · 2026-07-14 · 124 tests passing</p>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<h2>Architecture Overview</h2>
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<div class="arch-diagram">
-  <div class="arch-row" style="justify-content: center;">
-    <div class="arch-box arch-box-fisher">
-      <div class="arch-box-title">Fisher Layer</div>
-      <div class="arch-box-sub">Layer 0 · ADR-011/012/013</div>
-      <div class="arch-box-sub">Mundell-Fleming / Rey</div>
-    </div>
-    <span class="arch-arrow">→</span>
-    <div class="arch-box arch-box-sfm">
-      <div class="arch-box-title">SFM Layer</div>
-      <div class="arch-box-sub">Layer 1 · ADR-014/015</div>
-      <div class="arch-box-sub">Sharpe-Fama-Merton</div>
-    </div>
-    <span class="arch-arrow">→</span>
-    <div class="arch-box arch-box-graham">
-      <div class="arch-box-title">Graham Layer</div>
-      <div class="arch-box-sub">Layer 2 · ADR-016/009/010</div>
-      <div class="arch-box-sub">Thesis Architecture</div>
-    </div>
-    <span class="arch-arrow">→</span>
-    <div class="arch-box arch-box-markowitz">
-      <div class="arch-box-title">Markowitz Layer</div>
-      <div class="arch-box-sub">Layer 3 · ADR-017</div>
-      <div class="arch-box-sub">Portfolio + Alpha Capture</div>
-    </div>
-  </div>
-
-  <div class="arch-damodaran-bar">
-    ┌──────────────── Damodaran Cross-Section Supervisor (ADR-018) ────────────────┐
-    │  7 Constraints · Belief Pool · Holdings Pool · Forward Valuation · Adjudicator │
-    └────────────────────────────────────────────────────────────────────────────────┘
-  </div>
-
-  <div style="margin-top: 16px; font-size: 12px; color: var(--text-muted);">
-    <strong>Information flow:</strong> DOWN only (Fisher → SFM → Graham → Markowitz). No upstream modification.<br>
-    <strong>Damodaran:</strong> Cuts horizontally across all layers. Monitors and flags, does NOT decide.
+<!-- ════ Header ════ -->
+<div class="header">
+  <h1>Claw Quant</h1>
+  <div class="subtitle">多层投资智能体框架 · Multi-Layer Investment Agent Framework</div>
+  <div class="meta">
+    <span class="meta-item"><span class="meta-dot" style="background: var(--accent);"></span> 271 tests passing</span>
+    <span class="meta-item"><span class="meta-dot" style="background: var(--brand);"></span> 18 ADRs</span>
+    <span class="meta-item"><span class="meta-dot" style="background: var(--info);"></span> 5 Python scripts</span>
+    <span class="meta-item"><span class="meta-dot" style="background: var(--warn);"></span> CI/CD enabled</span>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<h2>Acceptance Summary</h2>
-<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ════ Architecture Diagram ════ -->
+<div class="arch-wrap">
+  <div class="arch-title">System Architecture · 系统架构</div>
 
-<div class="card-grid">
-  <div class="card">
-    <h3>Test Coverage</h3>
-    <div class="metric-row">
-      <span class="metric-label">Total tests</span>
-      <span class="metric-value">124</span>
+  <!-- ─── Four Sequential Layers ─── -->
+  <div class="pipeline">
+
+    <!-- Fisher -->
+    <div class="layer-card" data-layer="fisher">
+      <div class="layer-num">Layer 0</div>
+      <div class="layer-name">Fisher<span class="full-name">货币环境 · Monetary Environment</span></div>
+      <div class="layer-scholars">
+        <div class="scholar-row">
+          <span class="scholar-name">Irving Fisher</span>
+          <span class="scholar-year">(1930)</span>
+        </div>
+        <div class="scholar-const">Fisher Equation: r = i − π</div>
+      </div>
+      <div class="layer-output">Output: <code>fisher_interface</code></div>
+      <div class="layer-adr">ADR-011 · ADR-012 · ADR-013</div>
     </div>
-    <div class="metric-row">
-      <span class="metric-label">Passing</span>
-      <span class="metric-value" style="color: var(--pass)">124 (100%)</span>
+
+    <!-- Arrow: Fisher → SFM -->
+    <div class="flow-arrow">
+      <svg width="48" height="24" viewBox="0 0 48 24">
+        <defs>
+          <marker id="arrow1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M1 1 L7 4 L1 7 Z" fill="#88909f"/>
+          </marker>
+        </defs>
+        <path d="M4 12 L40 12" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow1)"/>
+      </svg>
+      <div class="flow-label">monetary<br>environment</div>
     </div>
-    <div class="metric-row">
-      <span class="metric-label">Failing</span>
-      <span class="metric-value" style="color: var(--pass)">0</span>
+
+    <!-- SFM -->
+    <div class="layer-card" data-layer="sfm">
+      <div class="layer-num">Layer 1</div>
+      <div class="layer-name">SFM<span class="full-name">因子流形 · Factor Manifold State</span></div>
+      <div class="layer-scholars">
+        <div class="scholar-row">
+          <span class="scholar-name">William F. Sharpe</span>
+          <span class="scholar-year">(1964)</span>
+          <span class="scholar-const">CAPM · E(R)=α+β·γ</span>
+        </div>
+        <div class="scholar-row">
+          <span class="scholar-name">Eugene F. Fama</span>
+          <span class="scholar-year">(1993)</span>
+          <span class="scholar-const">3-Factor Model (MKT/SMB/HML)</span>
+        </div>
+        <div class="scholar-row">
+          <span class="scholar-name">Robert C. Merton</span>
+          <span class="scholar-year">(1973)</span>
+          <span class="scholar-const">ICAPM · Intertemporal CAPM</span>
+        </div>
+      </div>
+      <div class="layer-output">Output: <code>sfm_interface</code></div>
+      <div class="layer-adr">ADR-014 · ADR-015</div>
     </div>
-    <div class="metric-row">
-      <span class="metric-label">Execution time</span>
-      <span class="metric-value">4.25s</span>
+
+    <!-- Arrow: SFM → Graham -->
+    <div class="flow-arrow">
+      <svg width="48" height="24" viewBox="0 0 48 24">
+        <defs>
+          <marker id="arrow2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M1 1 L7 4 L1 7 Z" fill="#88909f"/>
+          </marker>
+        </defs>
+        <path d="M4 12 L40 12" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow2)"/>
+      </svg>
+      <div class="flow-label">factor<br>manifold</div>
     </div>
-    <div class="progress-bar">
-      <div class="progress-fill" style="width: 100%; background: var(--pass);"></div>
+
+    <!-- Graham -->
+    <div class="layer-card" data-layer="graham">
+      <div class="layer-num">Layer 2</div>
+      <div class="layer-name">Graham<span class="full-name">投资信念 · Investment Belief Formation</span></div>
+      <div class="layer-scholars">
+        <div class="scholar-row">
+          <span class="scholar-name">Benjamin Graham</span>
+          <span class="scholar-year">(1934)</span>
+          <span class="scholar-const">Margin of Safety</span>
+        </div>
+        <div class="scholar-row">
+          <span class="scholar-name">Karl Popper</span>
+          <span class="scholar-year">(1963)</span>
+          <span class="scholar-const">Falsificationism</span>
+        </div>
+      </div>
+      <div class="layer-output">Output: <code>thesis.md</code></div>
+      <div class="layer-adr">ADR-016 · ADR-009 · ADR-010</div>
+    </div>
+
+    <!-- Arrow: Graham → Markowitz -->
+    <div class="flow-arrow">
+      <svg width="48" height="24" viewBox="0 0 48 24">
+        <defs>
+          <marker id="arrow3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M1 1 L7 4 L1 7 Z" fill="#88909f"/>
+          </marker>
+        </defs>
+        <path d="M4 12 L40 12" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow3)"/>
+      </svg>
+      <div class="flow-label">conviction<br>+ risk budget</div>
+    </div>
+
+    <!-- Markowitz -->
+    <div class="layer-card" data-layer="markowitz">
+      <div class="layer-num">Layer 3</div>
+      <div class="layer-name">Markowitz<span class="full-name">组合构建 · Portfolio Construction</span></div>
+      <div class="layer-scholars">
+        <div class="scholar-row">
+          <span class="scholar-name">Harry Markowitz</span>
+          <span class="scholar-year">(1952)</span>
+          <span class="scholar-const">Modern Portfolio Theory</span>
+        </div>
+        <div class="scholar-row">
+          <span class="scholar-name">John L. Kelly</span>
+          <span class="scholar-year">(1956)</span>
+          <span class="scholar-const">Kelly Criterion · Alpha Capture</span>
+        </div>
+      </div>
+      <div class="layer-output">Output: <code>holdings.yaml</code></div>
+      <div class="layer-adr">ADR-017</div>
+    </div>
+
+  </div>
+
+  <!-- ─── Damodaran Cross-Section Bar ─── -->
+  <div class="damodaran-connectors">
+    <div class="damodaran-connector"></div>
+    <div class="damodaran-connector"></div>
+    <div class="damodaran-connector"></div>
+    <div class="damodaran-connector"></div>
+  </div>
+
+  <div class="damodaran-bar">
+    <div>
+      <div class="damodaran-label">
+        <span class="icon">⚖</span>
+        Damodaran Cross-Section Supervisor
+      </div>
+      <div class="damodaran-desc" style="margin-top: 4px;">
+        <span style="font-family: var(--font-serif); font-weight: 600; color: var(--text);">Aswath Damodaran</span>
+        <span style="color: var(--text-dim); font-family: var(--font-mono); font-size: 11px;"> (NYU Stern)</span>
+        — Adjudicator · "Look Forward" Valuation · Monitors &amp; Flags, Does NOT Decide
+      </div>
+    </div>
+    <div class="damodaran-tags">
+      <span class="damodaran-tag">max 5 theses</span>
+      <span class="damodaran-tag">max 15 tickers</span>
+      <span class="damodaran-tag">≤40% / thesis</span>
+      <span class="damodaran-tag">≤15% / ticker</span>
+      <span class="damodaran-tag">≤60% / duration</span>
+      <span class="damodaran-tag">≤50% / sector</span>
+      <span class="damodaran-tag">Fisher equity cap</span>
     </div>
   </div>
 
-  <div class="card">
-    <h3>File Completeness</h3>
-    <div class="metric-row">
-      <span class="metric-label">ADR files</span>
-      <span class="metric-value">18/18 <span class="status-badge status-pass">COMPLETE</span></span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">State files</span>
-      <span class="metric-value">4/4 <span class="status-badge status-pass">COMPLETE</span></span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Template files</span>
-      <span class="metric-value">4/4 <span class="status-badge status-pass">COMPLETE</span></span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Scripts</span>
-      <span class="metric-value">5/5 <span class="status-badge status-pass">COMPLETE</span></span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Runtime directories</span>
-      <span class="metric-value">3/3 <span class="status-badge status-pass">COMPLETE</span></span>
-    </div>
+  <!-- ─── Flow Notes ─── -->
+  <div class="flow-note">
+    <span class="pill">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7 L11 7 M8 4 L11 7 L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Information flows DOWN only
+    </span>
+    <span class="pill">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7 L12 7 M2 7 L5 4 M2 7 L5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Damodaran cuts horizontally across all layers
+    </span>
+    <span class="pill">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2 L7 12 M4 9 L7 12 L10 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Released capital re-enters framework (fungible)
+    </span>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<h2>Layer-by-Layer Verification</h2>
-<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ════ Layer Details ════ -->
+<div class="detail-grid">
 
-<h3>Fisher Layer (ADR-011/012/013)</h3>
-<table>
-  <tr><th>Component</th><th>File</th><th>Status</th><th>Tests</th></tr>
-  <tr><td>Layer 1: Global Financial Cycle</td><td><code>fisher_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>3</td></tr>
-  <tr><td>Layer 2: Transmission Channels</td><td><code>fisher_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>3</td></tr>
-  <tr><td>Layer 3: A-share Marginal Liquidity</td><td><code>fisher_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>2</td></tr>
-  <tr><td>Layer 4: Composite Assessment</td><td><code>fisher_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>5</td></tr>
-  <tr><td>fisher_interface (ADR-016 contract)</td><td><code>fisher_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>6</td></tr>
-  <tr><td>Regime Surveillance Log</td><td><code>fisher_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>1</td></tr>
-  <tr><td>Intelligence Source Registry</td><td><code>world/intelligence_source_registry.yaml</code></td><td><span class="status-badge status-pass">PASS</span></td><td>—</td></tr>
-  <tr><td>Data population</td><td>—</td><td><span class="status-badge status-gap">TEMPLATE</span></td><td>—</td></tr>
-</table>
-
-<h3>SFM Layer (ADR-014/015)</h3>
-<table>
-  <tr><th>Module</th><th>Script</th><th>State Section</th><th>Status</th><th>Tests</th></tr>
-  <tr><td>1a: Carhart Baseline</td><td><code>carhart_regression.py</code></td><td><code>sfm_state.md#carhart_baseline</code></td><td><span class="status-badge status-pass">REAL DATA</span></td><td>15</td></tr>
-  <tr><td>1b: Factor Duration Spectrum</td><td><code>factor_ic_engine.py</code></td><td><code>sfm_state.md#factor_duration_spectrum</code></td><td><span class="status-badge status-gap">TEMPLATE</span></td><td>14</td></tr>
-  <tr><td>1c: Extended Premia</td><td><code>options_proxy.py</code></td><td><code>sfm_state.md#extended_premia</code></td><td><span class="status-badge status-gap">TEMPLATE</span></td><td>—</td></tr>
-  <tr><td>2a: Crowding by Duration</td><td><code>long_short_cost.py</code></td><td><code>sfm_state.md#crowding_by_duration</code></td><td><span class="status-badge status-gap">TEMPLATE</span></td><td>—</td></tr>
-  <tr><td>2b: Institutional Constraints</td><td>—</td><td><code>sfm_state.md#institutional_constraints</code></td><td><span class="status-badge status-pass">SCHEMA OK</span></td><td>1</td></tr>
-  <tr><td>2c: Transient Anomaly</td><td>—</td><td><code>sfm_state.md#transient_anomaly</code></td><td><span class="status-badge status-pass">SCHEMA OK</span></td><td>1</td></tr>
-  <tr><td>3a: Duration Regime</td><td>—</td><td><code>sfm_state.md#duration_regime</code></td><td><span class="status-badge status-pass">SCHEMA OK</span></td><td>1</td></tr>
-  <tr><td>3b: Forced Movement (S4)</td><td><code>cffex_scraper.py</code></td><td><code>sfm_state.md#forced_movement</code></td><td><span class="status-badge status-gap">TEMPLATE</span></td><td>—</td></tr>
-  <tr><td>3c: Rotation Path</td><td>—</td><td><code>sfm_state.md#rotation_path</code></td><td><span class="status-badge status-pass">SCHEMA OK</span></td><td>1</td></tr>
-  <tr><td>4: Composite Output</td><td>—</td><td><code>sfm_state.md#composite_output</code></td><td><span class="status-badge status-pass">SCHEMA OK</span></td><td>1</td></tr>
-  <tr><td>sfm_interface (ADR-016 contract)</td><td>—</td><td><code>sfm_state.md#sfm_interface</code></td><td><span class="status-badge status-pass">PASS</span></td><td>6</td></tr>
-</table>
-
-<h3>Graham Layer (ADR-016/009/010)</h3>
-<table>
-  <tr><th>Component</th><th>File</th><th>Status</th><th>Tests</th></tr>
-  <tr><td>Thesis Template — Graham Region</td><td><code>templates/thesis_template.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>9</td></tr>
-  <tr><td>Thesis Template — Markowitz Region</td><td><code>templates/thesis_template.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>7</td></tr>
-  <tr><td>Thesis Template — Update Log</td><td><code>templates/thesis_template.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>1</td></tr>
-  <tr><td>Alpha Capture Schedule (4 milestones)</td><td><code>templates/thesis_template.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>2</td></tr>
-  <tr><td>fisher_alignment / sfm_alignment</td><td><code>templates/thesis_template.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>2</td></tr>
-  <tr><td>Thesis Invalidation Protocol</td><td>ADR-016 §Invalidation</td><td><span class="status-badge status-pass">DOCUMENTED</span></td><td>—</td></tr>
-  <tr><td>Active theses</td><td><code>theses/</code></td><td><span class="status-badge status-gap">EMPTY (runtime)</span></td><td>—</td></tr>
-</table>
-
-<h3>Markowitz Layer (ADR-017)</h3>
-<table>
-  <tr><th>Component</th><th>File</th><th>Status</th><th>Tests</th></tr>
-  <tr><td>Holdings Template (pure execution)</td><td><code>templates/holdings_template.yaml</code></td><td><span class="status-badge status-pass">PASS</span></td><td>15</td></tr>
-  <tr><td>Belief-Action Separation enforced</td><td>7 belief fields excluded</td><td><span class="status-badge status-pass">PASS</span></td><td>7</td></tr>
-  <tr><td>Capital Allocation Registry</td><td><code>portfolio/capital_allocation_registry.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>7</td></tr>
-  <tr><td>Active holdings</td><td><code>holdings/</code></td><td><span class="status-badge status-gap">EMPTY (runtime)</span></td><td>—</td></tr>
-</table>
-
-<h3>Damodaran Layer (ADR-018)</h3>
-<table>
-  <tr><th>Component</th><th>File</th><th>Status</th><th>Tests</th></tr>
-  <tr><td>Belief Pool</td><td><code>portfolio/damodaran_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>2</td></tr>
-  <tr><td>Holdings Pool</td><td><code>portfolio/damodaran_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>2</td></tr>
-  <tr><td>7 Constraints</td><td><code>portfolio/damodaran_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>2</td></tr>
-  <tr><td>Forward Valuation</td><td><code>portfolio/damodaran_state.md</code></td><td><span class="status-badge status-pass">PASS</span></td><td>1</td></tr>
-  <tr><td>Trigger Mode C (event + periodic)</td><td>ADR-018 §Trigger</td><td><span class="status-badge status-pass">DOCUMENTED</span></td><td>—</td></tr>
-</table>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<h2>Project File Inventory</h2>
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<div class="card-grid">
-  <div class="card">
-    <h3>State Files (4/4)</h3>
-    <ul class="file-list">
-      <li class="file-ok">✓ fisher_state.md — Layer 0 (ADR-011, 4 layers + fisher_interface)</li>
-      <li class="file-ok">✓ sfm_state.md — Layer 1 (ADR-014, 10 modules + sfm_interface)</li>
-      <li class="file-ok">✓ portfolio/capital_allocation_registry.md — ADR-017 §3</li>
-      <li class="file-ok">✓ portfolio/damodaran_state.md — ADR-018</li>
+  <div class="detail-card" data-color="fisher">
+    <div class="detail-header">
+      <h3>Fisher Layer · 货币环境</h3>
+      <span class="adr">ADR-011/012/013</span>
+    </div>
+    <div class="detail-sub">Mundell-Fleming / Rey framework — monetary environment assessment</div>
+    <ul class="detail-list">
+      <li>Layer 1: Global Financial Cycle (Fed balance sheet, rates, USD)</li>
+      <li>Layer 2: Three Transmission Channels (cross-border, FX reserves, risk discount)</li>
+      <li>Layer 3: A-share Marginal Liquidity (PBoC modifier, endogenous factors)</li>
+      <li>Layer 4: Composite Assessment → <code>fisher_interface</code></li>
+      <li>Update Protocol: Tier 1 (daily) / Tier 2 (weekly) / Tier 3 (bidirectional Feynman)</li>
+      <li>Intelligence Source Registry (ADR-013)</li>
     </ul>
   </div>
 
-  <div class="card">
-    <h3>Templates (4/4)</h3>
-    <ul class="file-list">
-      <li class="file-ok">✓ templates/thesis_template.md — Graham + Markowitz Region</li>
-      <li class="file-ok">✓ templates/holdings_template.yaml — pure execution record</li>
-      <li class="file-ok">✓ templates/capital_allocation_registry_template.md</li>
-      <li class="file-ok">✓ templates/damodaran_state_template.md</li>
+  <div class="detail-card" data-color="sfm">
+    <div class="detail-header">
+      <h3>SFM Layer · 因子流形</h3>
+      <span class="adr">ADR-014/015</span>
+    </div>
+    <div class="detail-sub">Sharpe-Fama-Merton manifold state — factor landscape + anomaly + gradient</div>
+    <ul class="detail-list">
+      <li><strong>Sharpe (1964)</strong>: CAPM equation scaffold — E(R<sup>e</sup>) = α + β·γ</li>
+      <li><strong>Fama (1993)</strong>: Three-factor model — MKT / SMB / HML (extended by Carhart 1997 with MOM)</li>
+      <li><strong>Merton (1973)</strong>: ICAPM — intertemporal factor duration dynamics</li>
+      <li>Module 1: Factor Landscape (Carhart baseline, IC half-life, extended premia)</li>
+      <li>Module 2: Anomaly Map (crowding, institutional constraints, transient anomalies)</li>
+      <li>Module 3: Gradient Estimation (duration regime, forced movement, rotation path)</li>
+      <li>Module 4: Composite Output → <code>sfm_interface</code></li>
     </ul>
   </div>
 
-  <div class="card">
-    <h3>Scripts (5/5)</h3>
-    <ul class="file-list">
-      <li class="file-ok">✓ carhart_regression.py — Module 1a (27 functions, 15 tests)</li>
-      <li class="file-ok">✓ factor_ic_engine.py — Module 1b (14 functions, 14 tests)</li>
-      <li class="file-ok">✓ long_short_cost.py — Module 2a (6 functions)</li>
-      <li class="file-ok">✓ options_proxy.py — Module 1c (7 functions)</li>
-      <li class="file-ok">✓ cffex_scraper.py — Module 3b (8 functions)</li>
+  <div class="detail-card" data-color="graham">
+    <div class="detail-header">
+      <h3>Graham Layer · 信念形成</h3>
+      <span class="adr">ADR-016/009/010</span>
+    </div>
+    <div class="detail-sub">Investment belief formation — thesis architecture with Bayesian updating</div>
+    <ul class="detail-list">
+      <li>Belief-Action Separation: Graham Region (belief) + Markowitz Region (portfolio)</li>
+      <li>Conviction Level: quantitative floor (ADR-009) + Bayesian adjustment (ADR-016)</li>
+      <li>Expectation Gap: directional, magnitude, gap type</li>
+      <li>Thesis Invalidation Protocol: 3 automatic + 2 review triggers</li>
+      <li>Precommitment Rules: ADR-010 Fast/Full Check verification</li>
+      <li>Alpha Capture Schedule (4 milestones: 30% → 50% → 75% → 90%)</li>
+      <li>Interface Contract: ≤400 tokens per upstream layer</li>
     </ul>
   </div>
 
-  <div class="card">
-    <h3>Documentation & Config</h3>
-    <ul class="file-list">
-      <li class="file-ok">✓ CLAUDE.md — Agent configuration</li>
-      <li class="file-ok">✓ README.md — Updated to multi-layer architecture</li>
-      <li class="file-ok">✓ CONTEXT.md — 27 design principles, 18 ADRs</li>
-      <li class="file-ok">✓ docs/adr/ — 18 ADR files (0001-0018)</li>
-      <li class="file-ok">✓ world/intelligence_source_registry.yaml — ADR-013</li>
+  <div class="detail-card" data-color="markowitz">
+    <div class="detail-header">
+      <h3>Markowitz Layer · 组合构建</h3>
+      <span class="adr">ADR-017</span>
+    </div>
+    <div class="detail-sub">Portfolio construction = trade meta-plan generation</div>
+    <ul class="detail-list">
+      <li>Portfolio Composition: target weights, roles, duration buckets</li>
+      <li>Risk Budget: conviction tier × momentum multiplier → effective budget</li>
+      <li>Alpha Capture Schedule: Kelly dynamic profit-taking (orthogonal to conviction)</li>
+      <li>Holdings File: pure execution record, NO belief fields</li>
+      <li>Capital Allocation Registry: cross-thesis state tracker (not decision maker)</li>
+      <li>Capital Fungibility: realized profit = new deposits, framework re-runs</li>
+      <li>Cross-Thesis Overlap: one holdings file per ticker, weighted-average risk budget</li>
     </ul>
   </div>
+
+  <div class="detail-card" data-color="damodaran" style="grid-column: 1 / -1;">
+    <div class="detail-header">
+      <h3>Damodaran Layer · 横切监管</h3>
+      <span class="adr">ADR-018</span>
+    </div>
+    <div class="detail-sub">Cross-section supervisor — Adjudicator, NOT Allocator · "Look Forward" valuation philosophy</div>
+    <ul class="detail-list" style="columns: 2; column-gap: 32px;">
+      <li>Belief Pool: total active theses, belief diversity tracking</li>
+      <li>Holdings Pool: unique tickers, cross-thesis overlap, aggregate exposure</li>
+      <li>7 Portfolio Constraints: max theses, tickers, thesis weight, ticker weight, duration, sector, Fisher equity</li>
+      <li>Forward Valuation: per-thesis forward intrinsic value vs market value</li>
+      <li>Index Threshold: if forward return < 5% → flag "指数化" (index-like)</li>
+      <li>Trigger Mode C: event-driven + weekly scan + monthly valuation</li>
+      <li>Event Triggers: new thesis, new holding, Fisher regime change, alpha capture</li>
+      <li>Constraint Enforcement: flag only, never modify other layers' state</li>
+    </ul>
+  </div>
+
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<h2>Test Breakdown (124 tests)</h2>
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<table>
-  <tr><th>Test File</th><th>Scope</th><th>Tests</th><th>Status</th></tr>
-  <tr><td>test_fisher_state.py</td><td>Fisher Layer 4-layer schema (ADR-011)</td><td>16</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr><td>test_state_files.py</td><td>Interface outputs, SFM modules, portfolio, dirs</td><td>31</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr><td>test_thesis_template.py</td><td>Thesis Graham + Markowitz Region (ADR-016/017)</td><td>17</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr><td>test_holdings_template.py</td><td>Holdings schema + belief-action separation</td><td>15</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr><td>test_capital_allocation_registry.py</td><td>CAR schema (ADR-017 §3)</td><td>7</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr><td>test_damodaran_state.py</td><td>Damodaran 7 constraints (ADR-018)</td><td>8</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr><td>test_carhart_regression.py</td><td>Carhart regression core functions</td><td>15</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr><td>test_factor_ic_engine.py</td><td>IC + half-life core functions</td><td>14</td><td><span class="status-badge status-pass">ALL PASS</span></td></tr>
-  <tr style="font-weight: 700;"><td colspan="2">TOTAL</td><td>124</td><td><span class="status-badge status-pass">100% PASS</span></td></tr>
-</table>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<h2>Remaining Items (Data Population)</h2>
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<div class="card">
-  <p style="margin-bottom: 12px;">All schemas, templates, and infrastructure are <strong>complete and tested</strong>.
-  The remaining items are <strong>data population</strong> — running the scripts with real Wind API data
-  to replace template placeholder values (0.0) with actual market data.</p>
-
-  <table>
-    <tr><th>Item</th><th>Current State</th><th>Action Required</th><th>Priority</th></tr>
-    <tr>
-      <td>fisher_state.md data fields</td>
-      <td><span class="status-badge status-gap">TEMPLATE</span> placeholder values</td>
-      <td>Populate from Wind/H.4.1/CME FedWatch</td>
-      <td>P1 — Before first thesis</td>
-    </tr>
-    <tr>
-      <td>sfm_state.md Module 1b-3b</td>
-      <td><span class="status-badge status-gap">TEMPLATE</span> zeros</td>
-      <td>Run <code>factor_ic_engine.py</code>, <code>long_short_cost.py</code>, <code>cffex_scraper.py</code>, <code>options_proxy.py</code> with Wind data</td>
-      <td>P1 — Before first thesis</td>
-    </tr>
-    <tr>
-      <td>Active thesis files</td>
-      <td><span class="status-badge status-gap">EMPTY</span> theses/ directory</td>
-      <td>Copy template, populate with real analysis</td>
-      <td>P2 — Runtime (user-driven)</td>
-    </tr>
-    <tr>
-      <td>Active holdings files</td>
-      <td><span class="status-badge status-gap">EMPTY</span> holdings/ directory</td>
-      <td>Copy template when executing trades</td>
-      <td>P2 — Runtime (user-driven)</td>
-    </tr>
-    <tr>
-      <td>Damodaran state current values</td>
-      <td><span class="status-badge status-gap">ZEROS</span> all constraints = 0</td>
-      <td>Auto-populates when theses/holdings are created</td>
-      <td>P2 — Runtime (automatic)</td>
-    </tr>
-  </table>
-
-  <div class="legend" style="margin-top: 12px;">
-    <div class="legend-item"><span class="legend-dot" style="background: var(--pass);"></span> Complete & tested</div>
-    <div class="legend-item"><span class="legend-dot" style="background: var(--gap);"></span> Schema complete, data needs population</div>
-    <div class="legend-item"><span class="legend-dot" style="background: var(--missing);"></span> Missing (none remaining)</div>
+<!-- ════ Data Pipeline ════ -->
+<div class="pipeline-strip">
+  <h3>Offline Data Pipeline · 离线数据管线 (ADR-015)</h3>
+  <div class="pipeline-row">
+    <div class="pipeline-step">
+      <div class="step-name">Wind API</div>
+      <div class="step-meta">primary source</div>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <div class="step-name">AKShare</div>
+      <div class="step-meta">fallback</div>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <div class="step-name">Synthetic</div>
+      <div class="step-meta">last resort</div>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <div class="step-name">carhart_regression.py</div>
+      <div class="step-meta">Module 1a · weekly</div>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <div class="step-name">factor_ic_engine.py</div>
+      <div class="step-meta">Module 1b · weekly</div>
+    </div>
+    <span class="pipeline-arrow">→</span>
+    <div class="pipeline-step">
+      <div class="step-name">sfm_state.md</div>
+      <div class="step-meta">state output</div>
+    </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<h2>Run Tests</h2>
-<!-- ═══════════════════════════════════════════════════════════════ -->
-
-<div class="code-block">
-$ cd "Claw Quant"
-$ python3 -m pytest tests/ -v
-
-============================= test session starts ==============================
-platform darwin -- Python 3.9.6, pytest-8.4.2, pluggy-1.6.0
-
-tests/test_fisher_state.py ......................   16 passed
-tests/test_state_files.py ........................  31 passed
-tests/test_thesis_template.py ....................  17 passed
-tests/test_holdings_template.py ..................  15 passed
-tests/test_capital_allocation_registry.py .........   7 passed
-tests/test_damodaran_state.py ....................   8 passed
-tests/test_carhart_regression.py .................  15 passed
-tests/test_factor_ic_engine.py ...................  14 passed
-
-============================= 124 passed in 4.25s ==============================
+<!-- ════ Footer ════ -->
+<div class="footer">
+  <p>Claw Quant — Multi-Layer Investment Agent Framework &middot; <a href="https://github.com/yuyang-rgb094/claw-quant">GitHub Repository</a></p>
+  <p style="margin-top: 4px;">MIT License &middot; For educational and research purposes only</p>
 </div>
 
+</div>
 </body>
 </html>
