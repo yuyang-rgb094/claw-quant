@@ -42,7 +42,7 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
-.container { max-width: 1180px; margin: 0 auto; padding: 40px 32px 80px; }
+.container { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
 
 /* ─── Header ─── */
 .header { text-align: center; margin-bottom: 48px; }
@@ -55,14 +55,14 @@ body {
 .header .subtitle { color: var(--text-muted); font-size: 14px; }
 .header .meta { display: flex; justify-content: center; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
 .header .meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
-.header .meta-dot { width: 8px; height: 8px; border-radius: 50%; }
+.header .meta-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 /* ─── Architecture Diagram ─── */
 .arch-wrap {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 40px 36px;
+  padding: 36px 28px;
   margin-bottom: 40px;
   position: relative;
   overflow: hidden;
@@ -73,29 +73,45 @@ body {
   background: linear-gradient(90deg, transparent, var(--brand), transparent);
   opacity: 0.5;
 }
-.arch-title { text-align: center; font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; }
+.arch-title { text-align: center; font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 28px; }
 
-/* ─── Pipeline Row ─── */
-.pipeline { display: flex; align-items: stretch; gap: 0; position: relative; margin-bottom: 0; }
+/* ─── Vertical Pipeline ─── */
+.pipeline { display: flex; flex-direction: column; gap: 0; }
+
+/* ─── Flow Arrows (between cards, vertical) ─── */
+.flow-arrow {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 10px 0;
+  gap: 8px;
+}
+.flow-arrow svg { display: block; flex-shrink: 0; }
+.flow-label {
+  font-size: 10px; color: var(--text-dim);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+/* ─── Layer Cards ─── */
 .layer-card {
-  flex: 1; min-width: 0;
+  width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border);
   background: var(--surface-2);
-  padding: 24px 20px;
+  padding: 20px 24px;
   position: relative;
-  transition: transform 0.2s, border-color 0.2s;
-  z-index: 2;
+  transition: border-color 0.2s;
+  overflow: hidden;
 }
-.layer-card:hover { transform: translateY(-4px); }
-.layer-card[data-layer="fisher"] { border-top: 3px solid var(--fisher); }
-.layer-card[data-layer="sfm"] { border-top: 3px solid var(--sfm); }
-.layer-card[data-layer="graham"] { border-top: 3px solid var(--graham); }
-.layer-card[data-layer="markowitz"] { border-top: 3px solid var(--markowitz); }
+.layer-card:hover { border-color: var(--border-light); }
+.layer-card[data-layer="fisher"] { border-left: 3px solid var(--fisher); }
+.layer-card[data-layer="sfm"] { border-left: 3px solid var(--sfm); }
+.layer-card[data-layer="graham"] { border-left: 3px solid var(--graham); }
+.layer-card[data-layer="markowitz"] { border-left: 3px solid var(--markowitz); }
 
+.layer-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .layer-num {
   font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
-  margin-bottom: 4px;
 }
 .layer-card[data-layer="fisher"] .layer-num { color: var(--fisher); }
 .layer-card[data-layer="sfm"] .layer-num { color: var(--sfm); }
@@ -103,12 +119,15 @@ body {
 .layer-card[data-layer="markowitz"] .layer-num { color: var(--markowitz); }
 
 .layer-name {
-  font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--text);
+  font-size: 18px; font-weight: 700; color: var(--text);
 }
-.layer-name .full-name { font-size: 12px; font-weight: 400; color: var(--text-muted); display: block; margin-top: 2px; }
+.layer-name .full-name { font-size: 12px; font-weight: 400; color: var(--text-muted); margin-left: 4px; }
 
+/* ─── Card Body: scholars + meta sidebar ─── */
+.layer-body { display: flex; gap: 20px; align-items: stretch; }
 .layer-scholars {
-  margin: 10px 0; padding: 10px 12px;
+  flex: 1; min-width: 0;
+  padding: 12px 16px;
   background: var(--surface-3);
   border-radius: 8px;
   border-left: 2px solid;
@@ -119,105 +138,88 @@ body {
 .layer-card[data-layer="markowitz"] .layer-scholars { border-left-color: var(--markowitz); }
 
 .scholar-row {
-  display: flex; align-items: baseline; gap: 6px;
-  font-size: 12px; color: var(--text-muted);
-  padding: 3px 0;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  padding: 5px 0;
 }
-.scholar-name { font-weight: 600; color: var(--text); font-family: var(--font-serif); font-size: 13px; }
+.scholar-row + .scholar-row { border-top: 1px solid var(--border); margin-top: 2px; padding-top: 7px; }
+.scholar-name { font-weight: 600; color: var(--text); font-family: var(--font-serif); font-size: 14px; }
 .scholar-year { color: var(--text-dim); font-family: var(--font-mono); font-size: 11px; }
-.scholar-const { color: var(--brand-light); font-size: 11px; }
+.scholar-const {
+  color: var(--brand-light); font-size: 12px;
+  overflow-wrap: break-word; word-break: break-word;
+}
 
+/* ─── Meta sidebar (output + ADR) ─── */
+.layer-meta {
+  flex-shrink: 0; width: 200px;
+  display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface-3);
+  border-radius: 8px;
+}
+.layer-output { font-size: 12px; color: var(--text-muted); }
+.layer-output code {
+  font-family: var(--font-mono);
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--accent);
+  display: inline-block;
+  margin-top: 2px;
+}
 .layer-adr {
   font-size: 10px; color: var(--text-dim);
   font-family: var(--font-mono);
-  margin-top: 8px; padding-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
-}
-
-.layer-output {
-  margin-top: 8px;
-  font-size: 11px; color: var(--text-muted);
-}
-.layer-output code {
-  font-family: var(--font-mono);
-  background: var(--surface-3);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  color: var(--accent);
-}
-
-/* ─── Flow Arrows ─── */
-.flow-arrow {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 60px; position: relative; z-index: 1;
-}
-.flow-arrow svg { display: block; }
-.flow-label {
-  font-size: 10px; color: var(--text-dim);
-  font-family: var(--font-mono);
-  text-align: center; margin-top: 4px;
-  white-space: nowrap;
 }
 
 /* ─── Damodaran Bar ─── */
 .damodaran-bar {
-  margin-top: 0;
+  margin-top: 16px;
   border: 2px dashed var(--damodaran);
   border-radius: 14px;
   background: rgba(239, 91, 91, 0.04);
   padding: 20px 28px;
   display: flex; align-items: center; justify-content: space-between;
-  position: relative;
-}
-.damodaran-bar::before {
-  content: '';
-  position: absolute;
-  left: 50%; top: -12px; transform: translateX(-50%);
-  background: var(--bg);
-  padding: 0 12px;
-  font-size: 11px;
-  color: var(--damodaran);
-  font-weight: 600;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 .damodaran-label {
   font-size: 15px; font-weight: 700; color: var(--damodaran);
   display: flex; align-items: center; gap: 8px;
 }
 .damodaran-label .icon { font-size: 18px; }
-.damodaran-desc { font-size: 12px; color: var(--text-muted); }
-.damodaran-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.damodaran-desc {
+  font-size: 12px; color: var(--text-muted);
+  margin-top: 4px;
+  overflow-wrap: break-word; word-break: break-word;
+  line-height: 1.5;
+}
+.damodaran-tags { display: flex; gap: 8px; flex-wrap: wrap; max-width: 420px; }
 .damodaran-tag {
-  font-size: 11px; padding: 3px 10px;
+  font-size: 11px; padding: 4px 12px;
   border-radius: 999px;
   background: rgba(239, 91, 91, 0.1);
   color: var(--damodaran);
   font-weight: 500;
   font-family: var(--font-mono);
-}
-
-/* ─── Vertical connectors from layers to Damodaran ─── */
-.damodaran-connectors {
-  display: flex; justify-content: space-around;
-  padding: 0 20px; margin-top: -1px;
-}
-.damodaran-connector {
-  width: 1px; height: 20px;
-  border-left: 2px dotted var(--damodaran);
-  opacity: 0.3;
+  white-space: nowrap;
 }
 
 /* ─── Info flow note ─── */
 .flow-note {
   text-align: center; margin-top: 24px;
   font-size: 12px; color: var(--text-dim);
-  display: flex; align-items: center; justify-content: center; gap: 24px;
+  display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;
 }
 .flow-note .pill {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 12px; border-radius: 999px;
   background: var(--surface-3); border: 1px solid var(--border);
   font-size: 11px; color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* ─── Layer Detail Cards ─── */
@@ -227,7 +229,7 @@ body {
   gap: 20px;
   margin-bottom: 40px;
 }
-@media (max-width: 860px) { .detail-grid { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .detail-grid { grid-template-columns: 1fr; } }
 
 .detail-card {
   background: var(--surface);
@@ -235,6 +237,7 @@ body {
   border-radius: 12px;
   padding: 24px;
   position: relative;
+  overflow: hidden;
 }
 .detail-card::before {
   content: '';
@@ -247,7 +250,7 @@ body {
 .detail-card[data-color="markowitz"]::before { background: var(--markowitz); }
 .detail-card[data-color="damodaran"]::before { background: var(--damodaran); }
 
-.detail-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.detail-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
 .detail-header h3 { font-size: 15px; font-weight: 700; }
 .detail-header .adr { font-size: 11px; color: var(--text-dim); font-family: var(--font-mono); }
 .detail-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
@@ -257,6 +260,8 @@ body {
   font-size: 13px; color: var(--text-muted);
   padding: 5px 0; padding-left: 18px;
   position: relative;
+  overflow-wrap: break-word; word-break: break-word;
+  line-height: 1.5;
 }
 .detail-list li::before {
   content: ''; position: absolute; left: 0; top: 12px;
@@ -274,6 +279,27 @@ body {
   color: var(--accent);
 }
 
+/* ─── Damodaran detail list ─── */
+.damodaran-detail-list {
+  list-style: none; padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 32px;
+}
+@media (max-width: 600px) { .damodaran-detail-list { grid-template-columns: 1fr; } }
+.damodaran-detail-list li {
+  font-size: 13px; color: var(--text-muted);
+  padding: 5px 0; padding-left: 18px;
+  position: relative;
+  overflow-wrap: break-word; word-break: break-word;
+  line-height: 1.5;
+}
+.damodaran-detail-list li::before {
+  content: ''; position: absolute; left: 0; top: 12px;
+  width: 6px; height: 6px; border-radius: 2px;
+  background: var(--damodaran);
+}
+
 /* ─── Data Pipeline Strip ─── */
 .pipeline-strip {
   background: var(--surface);
@@ -283,18 +309,18 @@ body {
   margin-bottom: 40px;
 }
 .pipeline-strip h3 { font-size: 14px; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-.pipeline-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pipeline-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pipeline-step {
-  flex: 1; min-width: 120px;
-  padding: 12px 16px;
+  flex: 1 1 100px; min-width: 100px;
+  padding: 12px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 8px;
   text-align: center;
 }
-.pipeline-step .step-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.pipeline-step .step-name { font-size: 12px; font-weight: 600; color: var(--text); overflow-wrap: break-word; word-break: break-word; }
 .pipeline-step .step-meta { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-family: var(--font-mono); }
-.pipeline-arrow { color: var(--text-dim); font-size: 18px; }
+.pipeline-arrow { color: var(--text-dim); font-size: 18px; flex-shrink: 0; }
 
 /* ─── Footer ─── */
 .footer {
@@ -306,12 +332,12 @@ body {
 .footer a:hover { text-decoration: underline; }
 
 /* ─── Responsive ─── */
-@media (max-width: 860px) {
-  .pipeline { flex-direction: column; gap: 0; }
-  .flow-arrow { flex-direction: row; min-width: 0; padding: 8px 0; }
-  .flow-arrow svg { transform: rotate(90deg); }
-  .damodaran-bar { flex-direction: column; gap: 12px; text-align: center; }
+@media (max-width: 760px) {
   .container { padding: 24px 16px 60px; }
+  .layer-body { flex-direction: column; }
+  .layer-meta { width: 100%; }
+  .damodaran-bar { flex-direction: column; text-align: center; }
+  .damodaran-tags { max-width: 100%; justify-content: center; }
 }
 </style>
 </head>
@@ -334,148 +360,164 @@ body {
 <div class="arch-wrap">
   <div class="arch-title">System Architecture · 系统架构</div>
 
-  <!-- ─── Four Sequential Layers ─── -->
   <div class="pipeline">
 
-    <!-- Fisher -->
+    <!-- ─── Fisher ─── -->
     <div class="layer-card" data-layer="fisher">
-      <div class="layer-num">Layer 0</div>
-      <div class="layer-name">Fisher<span class="full-name">货币环境 · Monetary Environment</span></div>
-      <div class="layer-scholars">
-        <div class="scholar-row">
-          <span class="scholar-name">Irving Fisher</span>
-          <span class="scholar-year">(1930)</span>
-        </div>
-        <div class="scholar-const">Fisher Equation: r = i − π</div>
+      <div class="layer-header">
+        <span class="layer-num">Layer 0</span>
+        <span class="layer-name">Fisher<span class="full-name">货币环境 · Monetary Environment</span></span>
       </div>
-      <div class="layer-output">Output: <code>fisher_interface</code></div>
-      <div class="layer-adr">ADR-011 · ADR-012 · ADR-013</div>
+      <div class="layer-body">
+        <div class="layer-scholars">
+          <div class="scholar-row">
+            <span class="scholar-name">Irving Fisher</span>
+            <span class="scholar-year">(1930)</span>
+            <span class="scholar-const">— Fisher Equation: r = i − π</span>
+          </div>
+        </div>
+        <div class="layer-meta">
+          <div class="layer-output">Output<br><code>fisher_interface</code></div>
+          <div class="layer-adr">ADR-011 · ADR-012 · ADR-013</div>
+        </div>
+      </div>
     </div>
 
     <!-- Arrow: Fisher → SFM -->
     <div class="flow-arrow">
-      <svg width="48" height="24" viewBox="0 0 48 24">
+      <svg width="24" height="20" viewBox="0 0 24 20">
         <defs>
-          <marker id="arrow1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
-            <path d="M1 1 L7 4 L1 7 Z" fill="#88909f"/>
+          <marker id="arrow1" viewBox="0 0 8 8" refX="4" refY="7" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M1 1 L4 7 L7 1" fill="none" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </marker>
         </defs>
-        <path d="M4 12 L40 12" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow1)"/>
+        <path d="M12 2 L12 14" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow1)"/>
       </svg>
-      <div class="flow-label">monetary<br>environment</div>
+      <span class="flow-label">monetary env</span>
     </div>
 
-    <!-- SFM -->
+    <!-- ─── SFM ─── -->
     <div class="layer-card" data-layer="sfm">
-      <div class="layer-num">Layer 1</div>
-      <div class="layer-name">SFM<span class="full-name">因子流形 · Factor Manifold State</span></div>
-      <div class="layer-scholars">
-        <div class="scholar-row">
-          <span class="scholar-name">William F. Sharpe</span>
-          <span class="scholar-year">(1964)</span>
-          <span class="scholar-const">CAPM · E(R)=α+β·γ</span>
+      <div class="layer-header">
+        <span class="layer-num">Layer 1</span>
+        <span class="layer-name">SFM<span class="full-name">因子流形 · Factor Manifold</span></span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-scholars">
+          <div class="scholar-row">
+            <span class="scholar-name">William F. Sharpe</span>
+            <span class="scholar-year">(1964)</span>
+            <span class="scholar-const">— CAPM: E(R) = α + β·γ</span>
+          </div>
+          <div class="scholar-row">
+            <span class="scholar-name">Eugene F. Fama</span>
+            <span class="scholar-year">(1993)</span>
+            <span class="scholar-const">— 3-Factor (MKT / SMB / HML)</span>
+          </div>
+          <div class="scholar-row">
+            <span class="scholar-name">Robert C. Merton</span>
+            <span class="scholar-year">(1973)</span>
+            <span class="scholar-const">— ICAPM · Intertemporal</span>
+          </div>
         </div>
-        <div class="scholar-row">
-          <span class="scholar-name">Eugene F. Fama</span>
-          <span class="scholar-year">(1993)</span>
-          <span class="scholar-const">3-Factor Model (MKT/SMB/HML)</span>
-        </div>
-        <div class="scholar-row">
-          <span class="scholar-name">Robert C. Merton</span>
-          <span class="scholar-year">(1973)</span>
-          <span class="scholar-const">ICAPM · Intertemporal CAPM</span>
+        <div class="layer-meta">
+          <div class="layer-output">Output<br><code>sfm_interface</code></div>
+          <div class="layer-adr">ADR-014 · ADR-015</div>
         </div>
       </div>
-      <div class="layer-output">Output: <code>sfm_interface</code></div>
-      <div class="layer-adr">ADR-014 · ADR-015</div>
     </div>
 
     <!-- Arrow: SFM → Graham -->
     <div class="flow-arrow">
-      <svg width="48" height="24" viewBox="0 0 48 24">
+      <svg width="24" height="20" viewBox="0 0 24 20">
         <defs>
-          <marker id="arrow2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
-            <path d="M1 1 L7 4 L1 7 Z" fill="#88909f"/>
+          <marker id="arrow2" viewBox="0 0 8 8" refX="4" refY="7" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M1 1 L4 7 L7 1" fill="none" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </marker>
         </defs>
-        <path d="M4 12 L40 12" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow2)"/>
+        <path d="M12 2 L12 14" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow2)"/>
       </svg>
-      <div class="flow-label">factor<br>manifold</div>
+      <span class="flow-label">factor manifold</span>
     </div>
 
-    <!-- Graham -->
+    <!-- ─── Graham ─── -->
     <div class="layer-card" data-layer="graham">
-      <div class="layer-num">Layer 2</div>
-      <div class="layer-name">Graham<span class="full-name">投资信念 · Investment Belief Formation</span></div>
-      <div class="layer-scholars">
-        <div class="scholar-row">
-          <span class="scholar-name">Benjamin Graham</span>
-          <span class="scholar-year">(1934)</span>
-          <span class="scholar-const">Margin of Safety</span>
+      <div class="layer-header">
+        <span class="layer-num">Layer 2</span>
+        <span class="layer-name">Graham<span class="full-name">投资信念 · Belief Formation</span></span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-scholars">
+          <div class="scholar-row">
+            <span class="scholar-name">Benjamin Graham</span>
+            <span class="scholar-year">(1934)</span>
+            <span class="scholar-const">— Margin of Safety</span>
+          </div>
+          <div class="scholar-row">
+            <span class="scholar-name">Karl Popper</span>
+            <span class="scholar-year">(1963)</span>
+            <span class="scholar-const">— Falsificationism</span>
+          </div>
         </div>
-        <div class="scholar-row">
-          <span class="scholar-name">Karl Popper</span>
-          <span class="scholar-year">(1963)</span>
-          <span class="scholar-const">Falsificationism</span>
+        <div class="layer-meta">
+          <div class="layer-output">Output<br><code>thesis.md</code></div>
+          <div class="layer-adr">ADR-016 · ADR-009 · ADR-010</div>
         </div>
       </div>
-      <div class="layer-output">Output: <code>thesis.md</code></div>
-      <div class="layer-adr">ADR-016 · ADR-009 · ADR-010</div>
     </div>
 
     <!-- Arrow: Graham → Markowitz -->
     <div class="flow-arrow">
-      <svg width="48" height="24" viewBox="0 0 48 24">
+      <svg width="24" height="20" viewBox="0 0 24 20">
         <defs>
-          <marker id="arrow3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
-            <path d="M1 1 L7 4 L1 7 Z" fill="#88909f"/>
+          <marker id="arrow3" viewBox="0 0 8 8" refX="4" refY="7" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M1 1 L4 7 L7 1" fill="none" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </marker>
         </defs>
-        <path d="M4 12 L40 12" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow3)"/>
+        <path d="M12 2 L12 14" stroke="#88909f" stroke-width="1.5" stroke-linecap="round" fill="none" marker-end="url(#arrow3)"/>
       </svg>
-      <div class="flow-label">conviction<br>+ risk budget</div>
+      <span class="flow-label">conviction + risk</span>
     </div>
 
-    <!-- Markowitz -->
+    <!-- ─── Markowitz ─── -->
     <div class="layer-card" data-layer="markowitz">
-      <div class="layer-num">Layer 3</div>
-      <div class="layer-name">Markowitz<span class="full-name">组合构建 · Portfolio Construction</span></div>
-      <div class="layer-scholars">
-        <div class="scholar-row">
-          <span class="scholar-name">Harry Markowitz</span>
-          <span class="scholar-year">(1952)</span>
-          <span class="scholar-const">Modern Portfolio Theory</span>
+      <div class="layer-header">
+        <span class="layer-num">Layer 3</span>
+        <span class="layer-name">Markowitz<span class="full-name">组合构建 · Portfolio Construction</span></span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-scholars">
+          <div class="scholar-row">
+            <span class="scholar-name">Harry Markowitz</span>
+            <span class="scholar-year">(1952)</span>
+            <span class="scholar-const">— Modern Portfolio Theory</span>
+          </div>
+          <div class="scholar-row">
+            <span class="scholar-name">John L. Kelly</span>
+            <span class="scholar-year">(1956)</span>
+            <span class="scholar-const">— Kelly Criterion · Alpha Capture</span>
+          </div>
         </div>
-        <div class="scholar-row">
-          <span class="scholar-name">John L. Kelly</span>
-          <span class="scholar-year">(1956)</span>
-          <span class="scholar-const">Kelly Criterion · Alpha Capture</span>
+        <div class="layer-meta">
+          <div class="layer-output">Output<br><code>holdings.yaml</code></div>
+          <div class="layer-adr">ADR-017</div>
         </div>
       </div>
-      <div class="layer-output">Output: <code>holdings.yaml</code></div>
-      <div class="layer-adr">ADR-017</div>
     </div>
 
   </div>
 
   <!-- ─── Damodaran Cross-Section Bar ─── -->
-  <div class="damodaran-connectors">
-    <div class="damodaran-connector"></div>
-    <div class="damodaran-connector"></div>
-    <div class="damodaran-connector"></div>
-    <div class="damodaran-connector"></div>
-  </div>
-
   <div class="damodaran-bar">
     <div>
       <div class="damodaran-label">
         <span class="icon">⚖</span>
         Damodaran Cross-Section Supervisor
       </div>
-      <div class="damodaran-desc" style="margin-top: 4px;">
+      <div class="damodaran-desc">
         <span style="font-family: var(--font-serif); font-weight: 600; color: var(--text);">Aswath Damodaran</span>
         <span style="color: var(--text-dim); font-family: var(--font-mono); font-size: 11px;"> (NYU Stern)</span>
-        — Adjudicator · "Look Forward" Valuation · Monitors &amp; Flags, Does NOT Decide
+        — Adjudicator · "Look Forward" Valuation
       </div>
     </div>
     <div class="damodaran-tags">
@@ -492,16 +534,16 @@ body {
   <!-- ─── Flow Notes ─── -->
   <div class="flow-note">
     <span class="pill">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7 L11 7 M8 4 L11 7 L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2 L7 12 M4 9 L7 12 L10 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Information flows DOWN only
     </span>
     <span class="pill">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7 L12 7 M2 7 L5 4 M2 7 L5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Damodaran cuts horizontally across all layers
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7 L12 7 M2 7 L5 4 M2 7 L5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Damodaran cuts horizontally
     </span>
     <span class="pill">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2 L7 12 M4 9 L7 12 L10 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Released capital re-enters framework (fungible)
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7 L11 7 M8 4 L11 7 L8 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Capital re-enters (fungible)
     </span>
   </div>
 </div>
@@ -582,7 +624,7 @@ body {
       <span class="adr">ADR-018</span>
     </div>
     <div class="detail-sub">Cross-section supervisor — Adjudicator, NOT Allocator · "Look Forward" valuation philosophy</div>
-    <ul class="detail-list" style="columns: 2; column-gap: 32px;">
+    <ul class="damodaran-detail-list">
       <li>Belief Pool: total active theses, belief diversity tracking</li>
       <li>Holdings Pool: unique tickers, cross-thesis overlap, aggregate exposure</li>
       <li>7 Portfolio Constraints: max theses, tickers, thesis weight, ticker weight, duration, sector, Fisher equity</li>
